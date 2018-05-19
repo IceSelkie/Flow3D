@@ -1,4 +1,19 @@
+# .gitignore
+# Git-Ignore tells git, which files to ignore by default.
+# This tells git to ignore the files that are custom to local machines, or are generated files.
+# These clog up the repository, and won't help anyone.
+
+# Format of lines: Any pattern that matches a line will be ignored.
+# Any line that begins with a '#' is ignored.
+# Lines that begin with '!' will be added again (if parent folder not ignored)
+# To specify a folder, end the line with a '/'.
+# The '*' represents any number of any character.
+
+# Any .class file is ignored. (BlueJ's local "compiled" file)
 *.class
+# Any .ctxt file is ignored. (BlueJ's class datafile that keeps track of comments, javadocs, and other metadata)
 *.ctxt
+# Uh, there was one of these. I have no idea what it does, or what it does. It also acted weird in other ways.
 *.java~
+# Generated documentation can change between builds. No need to be in the repository.
 doc/ 
