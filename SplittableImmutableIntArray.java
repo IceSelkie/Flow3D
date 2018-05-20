@@ -36,7 +36,7 @@ public final class SplittableImmutableIntArray implements Iterable
    *
    * @param array The array to be used. (Note: a copy of the array will be made, so old references of the array cannot be used to modify the data within this immutable object.)
    * @param start Starting index (smallest index that can be used). Must be zero or larger, and smaller than the end index.
-   * @param end Ending index (smallest index that canNOT be used). Must be smaller than or equal to the array's length, and larger than the start index.
+   * @param end   Ending index (smallest index that canNOT be used). Must be smaller than or equal to the array's length, and larger than the start index.
    */
   public SplittableImmutableIntArray(int[] array, int start, int end)
   {
@@ -48,7 +48,7 @@ public final class SplittableImmutableIntArray implements Iterable
    * Input array is NOT copied.
    *
    * @param start Starting index (smallest index that can be used). Must be zero or larger, and smaller than the end index.
-   * @param end Ending index (smallest index that canNOT be used). Must be smaller than or equal to the array's length, and larger than the start index.
+   * @param end   Ending index (smallest index that canNOT be used). Must be smaller than or equal to the array's length, and larger than the start index.
    * @param array The array to be used. (Note: a copy of the array will NOT be made. This is a private constructor, so all uses of this constructor should be with immutable references, so the array has no need to by duplicated.)
    */
   private SplittableImmutableIntArray(int start, int end, int[] array)
@@ -62,7 +62,7 @@ public final class SplittableImmutableIntArray implements Iterable
       throw new IllegalArgumentException("The array cannot start at a negative index (" + start + ").");
     if (!(start < end))
       throw new IllegalArgumentException("The array cannot end before it starts.");
-    if (end >= data.length)
+    if (end > data.length)
       throw new IllegalArgumentException("The array isn't long enough to end at " + end + ", it is only " + len + " long.");
   }
 
@@ -74,7 +74,7 @@ public final class SplittableImmutableIntArray implements Iterable
    */
   public int get(int index)
   {
-    if (index > 0 && index < end)
+    if (index >= 0 && index < end)
       return data[start + index];
     else
       throw new ArrayIndexOutOfBoundsException();
@@ -84,13 +84,13 @@ public final class SplittableImmutableIntArray implements Iterable
    * Creates a new SplittableImmutableIntArray object that is bounded within the specified indexes.
    *
    * @param start Starting index (smallest index that can be used). Must be zero or larger, and smaller than the end index.
-   * @param end Ending index (smallest index that canNOT be used). Must be smaller than or equal to the array's length, and larger than the start index.
+   * @param end   Ending index (smallest index that canNOT be used). Must be smaller than or equal to the array's length, and larger than the start index.
    * @return The newly created SplittableImmutableIntArray object with this array that is now bounded.
    */
   public SplittableImmutableIntArray split(int start, int end)
   {
-    if (end >= len)
-      throw new IllegalArgumentException("This array isn't long enough to end at " + end + ". (It can be at most " + (len - 1) + ")");
+    if (end > len)
+      throw new IllegalArgumentException("This array isn't long enough to end at " + end + ". (It can be at most " + len + ")");
     return new SplittableImmutableIntArray(data, this.start + start, start + end);
   }
 
@@ -125,7 +125,10 @@ public final class SplittableImmutableIntArray implements Iterable
   {
     if (obj == null)
       return false;
+    if (!(obj instanceof SplittableImmutableIntArray))
+      return false;
     SplittableImmutableIntArray other = (SplittableImmutableIntArray) obj;
+
     if (data == other.data)
       return true;
 
@@ -142,7 +145,7 @@ public final class SplittableImmutableIntArray implements Iterable
   /**
    * Trims the SplittableImmutableIntArray into one that doesnt have leading/trailing data in the internal array.
    * Copies the array.
-   *
+   * <p>
    * The new object will work identical to this object. This action is completely useless.
    * .equals on this object will even return true.
    *
@@ -167,10 +170,10 @@ public final class SplittableImmutableIntArray implements Iterable
 
   /**
    * class SplittableImmutableIntArrayIterator (aka: SIIAIterator) (Better Name Needed)
-   *
+   * <p>
    * Its an iterator for the SplittableImmutableIntArray class.
    * In case you wanted to for-each a SplittableImmutableIntArray like an array.
-   *
+   * <p>
    * Also this is a private class and doesn't need a java-doc. Oh well.
    *
    * @author Stanley S.
@@ -196,7 +199,7 @@ public final class SplittableImmutableIntArray implements Iterable
 
     /**
      * Returns {@code true} if the iteration has more elements.
-     * (In other words, returns {@code true} if {@link #next} would
+     * (In other words, returns {@code true} if {@link #next()} would
      * return an element rather than throwing an exception.)
      *
      * @return {@code true} if the iteration has more elements
