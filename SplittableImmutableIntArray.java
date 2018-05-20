@@ -1,6 +1,6 @@
 import java.util.Iterator;
 
-public final class SplittableImmutableIntArray implements Iterable
+public class SplittableImmutableIntArray implements Iterable
 {
   protected final int[] data;
   protected final int start;
