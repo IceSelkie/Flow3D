@@ -17,3 +17,10 @@
 *.java~
 # Generated documentation can change between builds. No need to be in the repository.
 doc/ 
+# Don't need the BlueJ project being updated and changed all the time.
+package.bluej
+# This doesnt need to be updated all the time either.
+.gitignore
+
+# Apple folder layout
+.DS_Store
