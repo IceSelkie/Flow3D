@@ -7,15 +7,44 @@
  */
 public class Path
 {
-    private enum PathType{empty, start, end, path}
-    //private PathType type = new PathType();
-    private String color;
+    PathType type;
+    PathColor color;
     /**
      * Constructor for objects of class Path
      */
-    public Path(PathType inputType, String pathColor)
+    public Path(PathType inputType, PathColor inputColor)
     {
-        //type = inputType;
+        type = inputType;
+        color = inputColor;
     }
-
+    /**
+     * <b>Summary</b> Set Path Type
+     */
+    public void setType(PathType inputType)
+    {
+        type = inputType;
+    }
+    /**
+     * <b>Summary</b> Set Path Color
+     */
+    public void setColor(PathColor inputColor)
+    {
+        color = inputColor;
+    }
+    /**
+     * <b>Summary</b>Returns Path Type
+     * @return type
+     */
+    public PathType getType()
+    {
+        return type;
+    }
+    /**
+     * <b>Summary</b>Returns Path color
+     * @return type
+     */
+    public PathColor getColor()
+    {
+        return color;
+    }
 }
