@@ -19,7 +19,9 @@ public class Cube
     }
     
     //public void setPath(int x, int y, int z);
+    public void setPath(Path input, int x, int y, int z)
     {
-        
+        cubePaths[x][y][z] = input;
     }
+    
 }
