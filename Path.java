@@ -9,13 +9,27 @@ public class Path
 {
     PathType type;
     PathColor color;
+    Path next;
+    Path previous;
     /**
      * Constructor for objects of class Path
      */
+    public Path(PathType inputType, PathColor inputColor, Path inputNext, Path inputPrevious)
+    {
+        type = inputType;
+        color = inputColor;
+        next = inputNext;
+        previous = inputPrevious;
+    }
     public Path(PathType inputType, PathColor inputColor)
     {
         type = inputType;
         color = inputColor;
+        next = previous = null;
+    }
+    public void insert(Path input, PathType inputType, PathColor inputColor)
+    {
+        
     }
     /**
      * <b>Summary</b> Set Path Type
