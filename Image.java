@@ -1,25 +1,31 @@
 import java.awt.Color;
+import java.awt.image.Raster;
+import java.awt.image.WritableRaster;
+import java.util.Random;
 
 /**
  * class Image
- *
+ * <p>
  * An image format that I can easily draw to the screen.
+ * <p>
  * Data is stored in blocks of 4 bytes in an array. (Bytes not stored as byte primitive, due to byte storing -128 to 127, and not 0 to 255.)
- *
+ * <p>
  * This format supports alpha channel as transparency.
- *
+ * <p>
  * Implements Cloneable.
  * This object can be cloned using public method {@link #clone()}.
  *
  * @author Stanley S.
- * @version 0.1 (mostly done (I think))
+ * @version 1.0
  */
 public class Image implements Cloneable
 {
   /**
    * The count of the number of integer elements that together represent one pixel in {@code data}.
    */
-  public static final int DATABLOCKLENGTH = 4; // RED, GREEN, BLUE, ALPHA*   -Alpha being 1 is palette color
+  public static final int DATABLOCKLENGTH = 4; // RED, GREEN, BLUE, ALPHA
+  private static final int[] BANDMASKS = {0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000}; // Used for rasterizing and DisplayableImage. No longer in use.
+  protected final double ANTIALIASINGSAMPLES = 1; // Takes this number squared samples. Only use whole numbers. 1 for no sampling; 16 for full 256 sampling. Default: 4
   protected final SplittableImmutableIntArray data; // array of {@code DATABLOCKLENGTH} integers, one set for each pixel.
   protected final int width;
   protected final int height;
@@ -31,6 +37,7 @@ public class Image implements Cloneable
 
   /**
    * Constructor for Image.
+   * <p>
    * Creates an image given a two dimensional matrix of colors, one for each pixel.
    * <p>
    * 4 channels supported: Red, Green, Blue, and Alpha (transparency).
@@ -44,6 +51,7 @@ public class Image implements Cloneable
 
   /**
    * Constructor for Image.
+   * <p>
    * Creates an image given a one dimensional array of data, with 3 or 4 ints per pixel (with or without alpha)
    *
    * @param img    The image data. If no alpha, alpha defaults to 255 (fully visible).
@@ -60,15 +68,67 @@ public class Image implements Cloneable
     data = img;
     this.width = width;
     this.height = height;
-    clearCrop();
-    clearTranslation();
-    clearScale();
-    clearRotation();
+    clearModifications();
+  }
+
+  /**
+   * Constructor for Image. (Package-Private: Testing)
+   * <p>
+   * Creates an image given a size and a (set of) color(s) in a (random) pattern.
+   * <p>
+   * Ordered "checkerboard" of size seed for seed less than or equal to 100.
+   *
+   * @param width Width of the image to generate.
+   * @param height Height of the image to generate.
+   * @param seed Random number seed, or: 0 to generate with a random seed, or a value less than or 100 to generate a checkerboard of those colors in order.
+   * @param colors The color(s) to generate the image with.
+   */
+  Image(int width, int height, long seed, Color... colors)
+  {
+    if (seed == 0)
+      seed = (int) (Math.random() * 99900) + 101;
+    int clen = colors.length;
+    Random rand = new Random(seed);
+
+    Color[][] cdat = new Color[width][height];
+    for (int w = 0; w < width; w++)
+      for (int h = 0; h < height; h++)
+        if (seed <= 100)
+          cdat[w][h] = colors[(w / (int) seed + h / (int) seed) % clen];
+        else
+          cdat[w][h] = colors[Math.abs((int) rand.nextLong()) % clen];
+
+    data = toSIIA(cdat);
+    this.width = width;
+    this.height = height;
+    clearModifications();
+  }
+
+  /**
+   * Gets the width of the image.
+   *
+   * @return The base width of the image, ignoring any modifications.
+   */
+  public int getWidth()
+  {
+    return width;
+  }
+
+  /**
+   * Gets the height of the image.
+   *
+   * @return The base height of the image, ignoring any modifications.
+   */
+  public int getHeight()
+  {
+    return height;
   }
 
   /**
    * Gets the array of color information at the given coordinates.
+   * <p>
    * Note: x is horizontal, increasing from LEFT to RIGHT.
+   * <p>
    * Note: y is vertical, increasing from TOP to BOTTOM.
    *
    * @param x The horizontal position within the image.
@@ -77,13 +137,17 @@ public class Image implements Cloneable
    */
   public int[] getA(int x, int y)
   {
+    if (x<0||x>=width||y<0||y>=height)
+      return new int[]{0,0,0,0};
     int index = (y * width + x) * DATABLOCKLENGTH;
     return data.split(index, index + 4).toArray();
   }
 
   /**
    * Gets the Color of the pixel at the given coordinates.
+   * <p>
    * Note: x is horizontal, increasing from LEFT to RIGHT.
+   * <p>
    * Note: y is vertical, increasing from TOP to BOTTOM.
    *
    * @param x The horizontal position within the image.
@@ -99,34 +163,45 @@ public class Image implements Cloneable
 
   /**
    * <a href="http://google.com/search?q=rasterize">Rasterizes</a> any modifications made to the image (Translations, Scales, Rotations, etc.) into a new Image object. Uses average color in the given region for output color.
+   * <p>
+   * Takes {@code ANTIALIASINGSAMPLES} squared samples per pixel. (THIS CAN CAUSE ISSUES WITH SPEED)
    *
    * @return A new Image object of the modified image, rasterized to have no remaining modifications, but look as close to the original as possible.
    */
-  public Image rasterize()
+  public Image rasterizeImage()
   {
+    // If there are no changes, then no need to do all this really slow processing.
+    if (!isLocallyModified())
+      return new Image(data, width, height);
+
+    // Find the furthest points, and change the bounds so that they will fit.
     double[] pt1 = applyModificationsToPosition(cropL, cropU);
     double[] pt2 = applyModificationsToPosition(cropL, height - cropD);
     double[] pt3 = applyModificationsToPosition(width - cropR, cropU);
     double[] pt4 = applyModificationsToPosition(width - cropR, height - cropD);
-    double top = max(pt1[1], pt2[1], pt3[1], pt4[1]);
-    double bottom = min(pt1[1], pt2[1], pt3[1], pt4[1]);
+    double top = min(pt1[1], pt2[1], pt3[1], pt4[1]);
+    double bottom = max(pt1[1], pt2[1], pt3[1], pt4[1]);
     double left = min(pt1[0], pt2[0], pt3[0], pt4[0]);
     double right = max(pt1[0], pt2[0], pt3[0], pt4[0]);
 
-    int width = (int) (Math.ceil(right) - Math.floor(left));
-    int height = (int) (Math.ceil(bottom) - Math.floor(top));
+    int width = roundUp(right) - roundDown(left);
+    int height = roundUp(bottom) - roundDown(top);
 
+    // This can be VERY large. Like a million long. Or longer.
     int[] data = new int[width * height * DATABLOCKLENGTH];
 
+    // This will take some time. (Heavy on the processing)
     int index = 0;
     for (int r = 0; r < height; r++)
       for (int c = 0; c < width; c++)
       {
-        int[] color = getRasterizedPixel(c, r);
-        //*DEBUG v
-        if (index != c + r * width)
-          System.err.println("index counter doesn't match position!");
-        //*DEBUG ^
+        int[] color = getRasterizedPixel(roundDown(c+top), roundDown(r+left));
+        if (Driver.DEBUG) // This has had problems before. Like with rounding 12.04 to 13. *cough*. Anyways, this is to catch stray issues.
+        {
+          if (index / DATABLOCKLENGTH != c + r * width)
+            System.err.println("index counter doesn't match position!"); }
+
+        // Save the new color
         for (int i = 0; i < DATABLOCKLENGTH; i++)
           data[index++] = color[i];
       }
@@ -140,6 +215,8 @@ public class Image implements Cloneable
   /**
    * Finds the color information in the form on an int[] of the average weighted colors within that pixel in the rasterized image.
    * <p>
+   * Rasterized pixel must be offset to the calculated position that can be used by {@link #reverseModification(double x, double y)}
+   * <p>
    * Used to create the rasterized image.
    *
    * @param x The x coordinate in the rasterized image.
@@ -148,13 +225,36 @@ public class Image implements Cloneable
    */
   public int[] getRasterizedPixel(int x, int y)
   {
-    //TODO
-    return null;
+    // Sum of pixel data.
+    double[] summedColorData = new double[DATABLOCKLENGTH];
+
+    // Take samples and sum the values.
+    for (int xOffset = 0; xOffset < ANTIALIASINGSAMPLES; xOffset++)
+      for (int yOffset = 0; yOffset < ANTIALIASINGSAMPLES; yOffset++)
+      {
+        // Find the position to sample
+        double[] loc = reverseModification(x + (xOffset + .5) / ANTIALIASINGSAMPLES, y + (yOffset + .5) / ANTIALIASINGSAMPLES);
+        // Take a sample
+        int[] clr = getA(roundDown(loc[0]), roundDown(loc[1]));
+        // And add the values, taking alpha into account.
+        for (int in = 0; in < 3; in++)
+          summedColorData[in] += clr[in]*(double)clr[3];
+        summedColorData[3]+=clr[3];
+      }
+
+    // Now divide by the alpha (to get the strength of the color)
+    int[] ret = new int[DATABLOCKLENGTH];
+    for (int in = 0; in < 4; in++)
+      ret[in] = round(summedColorData[in]/summedColorData[3]);
+    ret[3] = round(summedColorData[3]/(ANTIALIASINGSAMPLES * ANTIALIASINGSAMPLES));
+
+    return ret;
   }
 
   /**
    * Gets the coordinates of this image's origin, within the rasterized image.
-   * Note: Will be a whole number, because bother have their color values snapped to the same coordinate grid.
+   * <p>
+   * Note: Will be a whole number, because both have their color values snapped to the same coordinate grid.
    * <p>
    * After an image has been rasterized, call this to find how it has been translated (if needed).
    *
@@ -175,7 +275,9 @@ public class Image implements Cloneable
    * Scales (stretches) the whole image from its center outward, with the given magnitude.
    * <p>
    * A magnitude of 1 does nothing.
+   * <p>
    * Negative magnitudes are equivalent to rotating the image 180 degrees about its center, and scaling it by the positive magnitude.
+   * <p>
    * A magnitude of -1 inverts the image, and is equivalent to just rotating the image 180 degrees about its center.
    *
    * @param magnitude Magnitude of the stretch to apply.
@@ -189,7 +291,9 @@ public class Image implements Cloneable
    * Scales (stretches) the image by the given magnitudes on each of its axes separately.
    * <p>
    * A magnitude of 1 causes no change on that axis.
+   * <p>
    * Negative magnitudes are equivalent to flipping the image on that axis, then scaling it by the positive magnitude.
+   * <p>
    * A magnitude of -1 causes the image to flip over its center line.
    *
    * @param xMag The magnitude of the stretch to apply on the x axis.
@@ -206,7 +310,9 @@ public class Image implements Cloneable
    * The position of that point doesn't change. All other points are stretched away an amount proportionate to their distance from this point.
    * <p>
    * A magnitude of 1 causes no change on that axis.
+   * <p>
    * Negative magnitudes are equivalent to flipping the image on that axis (about the specified point), then scaling it by the positive magnitude.
+   * <p>
    * A magnitude of -1 causes the image to flip that axis over the specified point.
    *
    * @param xMag The magnitude of the stretch to apply on the x axis.
@@ -214,8 +320,6 @@ public class Image implements Cloneable
    */
   public void scaleAround(double xPos, double yPos, double xMag, double yMag)
   {
-    // Otherwise we are shifting the unscaled amount.
-    //TODO: actually that might be wrong. I wrote this kinda late at night.
     xPos *= scaleX;
     yPos *= scaleY;
 
@@ -223,6 +327,9 @@ public class Image implements Cloneable
     scaleX *= xMag;
     translateY -= yPos * (yMag * scaleY) - yPos * scaleY;
     scaleY *= yMag;
+
+    translateX = fixDouble(translateX);
+    translateY = fixDouble(translateY);
   }
 
   /**
@@ -253,6 +360,7 @@ public class Image implements Cloneable
    * Rotates the image the specified amount about the specified point.
    * <p>
    * 360 degrees is a full circle and does nothing.
+   * <p>
    * 180 degrees inverts the image about that point.
    *
    * @param xPos    The x position to rotate the image about.
@@ -262,11 +370,10 @@ public class Image implements Cloneable
   public void rotateAround(double xPos, double yPos, double degrees)
   {
     double dist = Math.sqrt(xPos * xPos + yPos * yPos);
-    double angle = Math.atan2(yPos, xPos) + (rotation * 2 * Math.PI / 180);
-    angle += angle >= 0 ? -Math.PI : Math.PI;
+    double angle = (Math.atan2(-yPos, xPos)) + Math.toRadians(rotation);
 
-    translateX += dist * (Math.cos(angle) - Math.cos(angle + degrees));
-    translateY += dist * (Math.cos(angle) - Math.cos(angle + degrees));
+    translateX -= fixDouble(dist * (Math.cos(angle + Math.toRadians(degrees)) - Math.cos(angle)));
+    translateY -= fixDouble(dist * (Math.sin(angle) - Math.sin(angle + Math.toRadians(degrees))));
 
     rotation += degrees;
     rotation %= 360;
@@ -415,10 +522,10 @@ public class Image implements Cloneable
 
     double dist = Math.sqrt(xPosOrig * xPosOrig + yPosOrig * yPosOrig);
     double angleRad = Math.atan2(yPosOrig, xPosOrig);
-    angleRad += rotationRadian();
+    angleRad -= rotationRadian();
 
-    double xPosModi = dist * Math.cos(angleRad) + translateX;
-    double yPosModi = dist * Math.sin(angleRad) + translateY;
+    double xPosModi = fixDouble(dist * Math.cos(angleRad) + translateX);
+    double yPosModi = fixDouble(dist * Math.sin(angleRad) + translateY);
 
     return new double[]{xPosModi, yPosModi};
   }
@@ -437,18 +544,22 @@ public class Image implements Cloneable
 
     double dist = Math.sqrt(xPosModi * xPosModi + yPosModi * yPosModi);
     double angleRad = Math.atan2(yPosModi, xPosModi);
-    angleRad -= rotationRadian();
+    angleRad += rotationRadian();
 
-    double xPosOrig = dist * Math.cos(angleRad);
-    double yPosOrig = dist * Math.sin(angleRad);
+    double xPosOrig = fixDouble(dist * Math.cos(angleRad));
+    double yPosOrig = fixDouble(dist * Math.sin(angleRad));
     xPosOrig /= scaleX;
     yPosOrig /= scaleY;
 
-    //*DEBUG v
-    double[] modifCheck = applyModificationsToPosition(xPosOrig, yPosOrig);
-    if (!(within(modifCheck[0], xPosModi, .01) && within(modifCheck[1], yPosModi, .01)))
-      System.err.println("Reversing position from a point then reapplying doesn't give the original value!!");
-    //*DEBUG ^
+    if (Driver.DEBUG)
+    {
+      double[] modifCheck = applyModificationsToPosition(xPosOrig, yPosOrig);
+      if (!(within(modifCheck[0], xPosModi + translateX, .0001) && within(modifCheck[1], yPosModi + translateY, .0001)))
+      {
+        System.err.println("Reversing position from a point then reapplying doesn't give the original value!! (Diff: " + Math.abs(modifCheck[0] - (xPosModi + translateX)) + ", " + Math.abs(modifCheck[1] - (yPosModi + translateY)) + ")");
+        throw new IllegalArgumentException();
+      }
+    }
     return new double[]{xPosOrig, yPosOrig};
   }
 
@@ -459,7 +570,7 @@ public class Image implements Cloneable
    */
   private double rotationRadian()
   {
-    return (rotation % 360) * 2 * Math.PI / 180;
+    return (rotation % 360) * Math.PI / 180;
   }
 
   /**
@@ -470,6 +581,7 @@ public class Image implements Cloneable
    */
   private static SplittableImmutableIntArray toSIIA(Color[][] img)
   {
+    // Integer data array.
     int[] data = new int[img[0].length * img.length * DATABLOCKLENGTH];
     int index = 0;
     for (Color[] ca : img)
@@ -482,7 +594,9 @@ public class Image implements Cloneable
         if (data[index - 1] == 1)
           data[index - 1]++;
       }
-    return new SplittableImmutableIntArray(data);
+
+    // This array can never be modified after this line, so pass it as immutable.
+    return new SplittableImmutableIntArray(data, 0 , data.length, true);
   }
 
   /**
@@ -500,7 +614,7 @@ public class Image implements Cloneable
     int index = 0;
     for (int i = 0; i < ret.length; i++)
       ret[i] = (i % 4 == 0) ? 255 : img.get(index++);
-    return new SplittableImmutableIntArray(ret);
+    return new SplittableImmutableIntArray(ret, 0, ret.length, true);
   }
 
   public Image clone()
@@ -527,6 +641,7 @@ public class Image implements Cloneable
     this.data = data;
   }
 
+  // NOTE: THIS IGNORES TRANSLATIONS OF AN IMAGE.
   @Override
   public boolean equals(Object obj)
   {
@@ -536,7 +651,10 @@ public class Image implements Cloneable
       return false;
     Image other = (Image) obj;
 
-    return (this.rasterize().data.equals(other.rasterize().data));
+    Image thisRast = this.rasterizeImage();
+    Image otherRast = other.rasterizeImage();
+
+    return (thisRast.data.equals(otherRast.data));
   }
 
   /**
@@ -581,7 +699,7 @@ public class Image implements Cloneable
    */
   private static int roundDown(double val)
   {
-    return (int) Math.floor(val);
+    return (int) Math.floor(fixDouble(val));
   }
 
   /**
@@ -594,7 +712,17 @@ public class Image implements Cloneable
    */
   private static int roundUp(double val)
   {
-    return (int) Math.ceil(val);
+    return (int) Math.ceil(fixDouble(val));
+  }
+
+  private static int round(double val)
+  {
+    boolean neg = val < 0;
+    if (neg)
+      val = -val;
+    if (val % 1 >= .5)
+      return (int) Math.ceil(val) * (neg ? -1 : 1);
+    return (int) Math.floor(val) * (neg ? -1 : 1);
   }
 
   /**
@@ -621,4 +749,38 @@ public class Image implements Cloneable
   {
     return Math.abs(difference) <= maxError;
   }
+
+  private static double fixDouble(double val)
+  {
+    //System.out.println((double) round(12*val));
+    if (within(val, round(12*val)/12D,0.00001))
+      return round(12*val)/12D;
+    return val;
+  }
+
+
+
+  // **************** RETIRED METHODS BELOW THIS POINT **************** //
+
+  /**
+   * @return DisplayableImage object that can be displayed.
+   */
+  /*
+  public DisplayableImage rasterize()
+  {
+    return new DisplayableImage(raster());
+  }*/
+
+  /**
+   * Converts the image into a WritableRaster object. Used for creating a DisplayableImage object.
+   */
+  /*
+  public WritableRaster raster()
+  {
+    // TODO: this must be compatible to the color model.
+    //WritableRaster wr = new DirectColorModel(32, 0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff).createCompatibleWritableRaster(width,height);
+    //wr.dataBuffer = rasterizeImage().data.toDataBuffer();
+    return Raster.createPackedRaster(data.toDataBuffer(),width,height,4,BANDMASKS,null);
+    //return new WritableRaster(new ComponentSampleModel(DataBuffer.TYPE_INT,width,height,4,1,new int[]{0,1,2,3}),rasterizeImage().data.toDataBuffer(),new java.awt.Point(0,0)){};
+  }*/
 }

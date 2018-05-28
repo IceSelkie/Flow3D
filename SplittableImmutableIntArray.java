@@ -1,3 +1,5 @@
+import java.awt.image.DataBuffer;
+import java.awt.image.DataBufferInt;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -40,30 +42,45 @@ public final class SplittableImmutableIntArray implements Iterable
    */
   public SplittableImmutableIntArray(int[] array, int start, int end)
   {
-    this(start, end, array.clone());
+    this(array, start, end, false);
   }
 
   /**
-   * a PRIVATE Constructor for SplittableImmutableIntArray
-   * Input array is NOT copied.
+   * Constructor for SplittableImmutableIntArray
+   * Creates a new SplittableImmutableIntArray for a subsection of that array.
+   * Does not copy the array.
    *
+   * @param old Existing SplittableImmutableIntArray to build this object off of.
+   * @param start Starting index within that SplittableImmutableIntArray.
+   * @param end Ending index within that SplittableImmutableIntArray.
+   */
+  public SplittableImmutableIntArray(SplittableImmutableIntArray old, int start, int end)
+  {
+    this(old.toArray(), start, end, true);
+  }
+
+  /**
+   * a PACKAGE-PRIVATE Constructor for SplittableImmutableIntArray
+   * Input array is optionally copied.
+   *
+   * @param array The array to be used. Will be copied if arrayIsImmutable is <code>true</code>.
    * @param start Starting index (smallest index that can be used). Must be zero or larger, and smaller than the end index.
    * @param end   Ending index (smallest index that canNOT be used). Must be smaller than or equal to the array's length, and larger than the start index.
-   * @param array The array to be used. (Note: a copy of the array will NOT be made. This is a private constructor, so all uses of this constructor should be with immutable references, so the array has no need to by duplicated.)
+   * @param arrayIsImmutable If the input array is immutable. If this is <code>true</code>, then the input array will not be copied. If <code>false</code>, it will.
    */
-  private SplittableImmutableIntArray(int start, int end, int[] array)
+  SplittableImmutableIntArray(int[] array, int start, int end, boolean arrayIsImmutable)
   {
-    data = array;
-    this.start = start;
-    this.end = end;
-    this.len = end - start;
-
     if (start < 0)
       throw new IllegalArgumentException("The array cannot start at a negative index (" + start + ").");
     if (!(start < end))
       throw new IllegalArgumentException("The array cannot end before it starts.");
-    if (end > data.length)
-      throw new IllegalArgumentException("The array isn't long enough to end at " + end + ", it is only " + len + " long.");
+    if (end > array.length)
+      throw new IllegalArgumentException("The array isn't long enough to end at " + end + ", it is only " + array.length + " long.");
+
+    data = arrayIsImmutable?array:array.clone();
+    this.start = start;
+    this.end = end;
+    this.len = end - start;
   }
 
   /**
@@ -77,7 +94,7 @@ public final class SplittableImmutableIntArray implements Iterable
     if (index >= 0 && index < end)
       return data[start + index];
     else
-      throw new ArrayIndexOutOfBoundsException();
+      throw new ArrayIndexOutOfBoundsException("Tried to get element at index: "+index+". The index must be " + (index<0?"greater than or equal to 0.":"at most "+length()+"."));
   }
 
   /**
@@ -90,13 +107,13 @@ public final class SplittableImmutableIntArray implements Iterable
   public SplittableImmutableIntArray split(int start, int end)
   {
     if (end > len)
-      throw new IllegalArgumentException("This array isn't long enough to end at " + end + ". (It can be at most " + len + ")");
-    return new SplittableImmutableIntArray(data, this.start + start, start + end);
+      throw new IllegalArgumentException("This array isn't long enough to end at " + end + ". (It can be at most " + length() + ")");
+    return new SplittableImmutableIntArray(data, this.start + start, this.start + end, true);
   }
 
   /**
    * Returns the number of accessible elements in the array with this object.
-   * (Also, equal to last-first)
+   * Equivalent to <code>last-first</code>.
    *
    * @return the length of the bounded array.
    */
@@ -118,6 +135,17 @@ public final class SplittableImmutableIntArray implements Iterable
     for (int i = 0; i < len; i++)
       array[i] = data[start + i];
     return array;
+  }
+
+  /**
+   * Converts this SplittableImmutableIntArray into a {@link java.awt.image.DataBufferInt} object, to be used for Images.
+   * COPIES THE ARRAY!
+   *
+   * @return a new {@link java.awt.image.DataBufferInt} object with the stored data and returns it.
+   */
+  public DataBufferInt toDataBuffer()
+  {
+    return new DataBufferInt(toArray(),len);
   }
 
   @Override
@@ -154,7 +182,7 @@ public final class SplittableImmutableIntArray implements Iterable
   @Deprecated
   public SplittableImmutableIntArray trim()
   {
-    return new SplittableImmutableIntArray(0, len, this.toArray());
+    return new SplittableImmutableIntArray(this.toArray(), 0, len, true);
   }
 
   /**
