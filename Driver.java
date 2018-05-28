@@ -10,6 +10,7 @@ import java.awt.*;
  */
 public class Driver
 {
+    public static final boolean DEBUG = false;
     /**
      * Main: The game of Flow begins here.
      *
