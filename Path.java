@@ -12,7 +12,7 @@ public class Path
     Path next;
     Path previous;
     /**
-     * Constructor for objects of class Path
+     * <b>Summary</b> Constructor for objects of class Path
      */
     public Path(PathType inputType, PathColor inputColor, Path inputNext, Path inputPrevious)
     {
@@ -21,12 +21,18 @@ public class Path
         next = inputNext;
         previous = inputPrevious;
     }
+    /**
+     * <b>Summary</b> Constructor for objects of Path class for initial Path location. 
+     */
     public Path(PathType inputType, PathColor inputColor)
     {
         type = inputType;
         color = inputColor;
         next = previous = null;
     }
+    /**
+     * <b>Summary</b> Method for inserting new Path.
+     */
     public void insert(Path input, PathType inputType, PathColor inputColor)
     {
         
