@@ -733,7 +733,7 @@ public class Image implements Cloneable
    * @param maxError The maximum allowed difference between the two values
    * @return {@code true} if the two values are within {@code maxError} of each other.
    */
-  private static boolean within(double valueA, double valueB, double maxError)
+  public static boolean within(double valueA, double valueB, double maxError)
   {
     return within(valueB - valueA, maxError);
   }
@@ -745,12 +745,12 @@ public class Image implements Cloneable
    * @param maxError   The maximum allowed error (or value).
    * @return {@code true} if the value's magnitude is less than or equal to the {@code maxError}.
    */
-  private static boolean within(double difference, double maxError)
+  public static boolean within(double difference, double maxError)
   {
     return Math.abs(difference) <= maxError;
   }
 
-  private static double fixDouble(double val)
+  public static double fixDouble(double val)
   {
     //System.out.println((double) round(12*val));
     if (within(val, round(12*val)/12D,0.00001))
