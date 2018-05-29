@@ -1,18 +1,12 @@
-import java.awt.Color;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.Font;
+import java.awt.*;
+import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
-import java.awt.Graphics2D;
-import java.awt.Graphics;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
-import java.awt.Insets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -33,6 +27,11 @@ import javax.swing.JPanel;
 public class Display extends JPanel 
 {
   private List<DisplayElement> elements;
+  private Graphics2D lastCanvas = null;
+  private List<DisplayButton> buttons = new LinkedList<>();
+  private List<DisplayButton> activelyPressedButtons = new ArrayList<>();
+  private boolean mouseListener = false;
+  private boolean scrollListener = false;
 
   /**
    * Constructor for Display.
@@ -64,18 +63,21 @@ public class Display extends JPanel
     // To be able to use Graphics2D specific methods. (Currently none)
     Graphics2D g2d = (Graphics2D)graphicsContext;
 
+    lastCanvas = g2d;
+
     // Call super method to do normal processing then draw ours on top.
     super.paintComponent(g2d);
 
     // This method will ALWAYS be ran on another thread from main, so when we access the element array to draw things, we need to prevent concurrent modification with a {@code synchronization}.
     // Copy the data elements to an array so they can be used and referenced without holding up the addition of new features. (Slight efficiency bump. Maybe not?)
-    DisplayElement[] elementsCopy;
+    Object[] elementsCopy;
     synchronized(elements) {
-      elementsCopy = (DisplayElement[]) elements.toArray();
+      elementsCopy = elements.toArray();
     }
     // Now draw the elements stored within the array.
-    for (DisplayElement command : elementsCopy)
+    for (Object cmd : elementsCopy)
     {
+      DisplayElement command = (DisplayElement) cmd;
       command.doCommand(g2d, getWidth(), getHeight());
     }
   }
@@ -187,6 +189,13 @@ public class Display extends JPanel
     return this;
   }
 
+  public Rectangle2D.Double stringBounds(String stringToDisplay, int fontSize, double xPos, double yPos)
+  {
+    if (lastCanvas==null)
+      return null;
+    return new Rectangle2D.Double(xPos,yPos-fontSize/2D, lastCanvas.getFontMetrics().stringWidth(stringToDisplay),fontSize);
+  }
+
   /**
    * Adds a line to be drawn to the queue. This will use the current color.
    * <p>
@@ -213,11 +222,89 @@ public class Display extends JPanel
   }
 
   /**
-   * Clears the screen of all elements back to solid white.
+   * Adds a button that can cause something to happen.
+   * @param btn The button to add.
+   * @param rectangle The rectangle of the trigger area for the button. Oldest button in that region is called.
+   */
+  public Display addButton(DisplayButton btn, Rectangle2D.Double rectangle)
+  {
+    enableMouseListener();
+    buttons.add(btn);
+    return this;
+  }
+
+  public void enableMouseListener()
+  {
+    mouseListener = true;
+    this.addMouseListener(new MouseListener() {
+
+      // Called when pressed then released and no movement. Called after released is called.
+      public void mouseClicked(MouseEvent e)
+      {
+        //System.out.println("mouseClicked: ("+e.getX()+","+e.getY()+")");
+      }
+
+      // Called when mouse is beinging to be pressed.
+      public void mousePressed(MouseEvent e)
+      {
+        //System.out.println("mousePressed: ("+e.getX()+","+e.getY()+")");
+        for (DisplayButton button : buttons)
+          if (isInRectangle(getLocation(e),button.getRegion()))
+          {
+            activelyPressedButtons.add(button);
+            button.clickStart(e.getButton(), getLocation(e));
+          }
+      }
+
+      // Let go of mouse click. Calls this then clicked.
+      public void mouseReleased(MouseEvent e)
+      {
+        for (DisplayButton button : activelyPressedButtons)
+          button.dragFinished(e.getButton(), getLocation(e));
+        //System.out.println("mouseReleased: ("+e.getX()+","+e.getY()+")");
+      }
+
+      public void mouseEntered(MouseEvent e) { }
+      public void mouseExited(MouseEvent e) { }
+    });
+
+    this.addMouseMotionListener(new MouseMotionListener() {
+      // Mouse is clicked & moves.
+      public void mouseDragged(MouseEvent e)
+      {
+        for (DisplayButton button : activelyPressedButtons)
+          button.dragged(getLocation(e));
+        //System.out.println("mouseDragged: ("+e.getX()+","+e.getY()+")");
+      }
+
+      // Mouse is over the JFrame and moves.
+      public void mouseMoved(MouseEvent e)
+      {
+        //System.out.println("mouseMoved: ("+e.getX()+","+e.getY()+")");
+      }
+    });
+  }
+
+  public boolean isInRectangle(Point2D.Double location, Rectangle2D.Double boundingBox)
+  {
+    return (Math.abs(location.getX()-boundingBox.getX())<boundingBox.getWidth()/2D && Math.abs(location.getY()-boundingBox.getY())<boundingBox.getHeight()/2D);
+  }
+
+  public Point2D.Double getLocation(MouseEvent e)
+  {
+    return new Point2D.Double(e.getX()-getWidth()/2D,getHeight()/2-e.getY());
+  }
+
+  /**
+   * Clears the screen of all elements back to solid white, and removes all buttons & listeners.
    */
   public void clearScreen()
   {
     elements.clear();
+    mouseListener = false;
+    scrollListener = false;
+    buttons.clear();
+    activelyPressedButtons.clear();
   }
 
 

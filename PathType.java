@@ -1,9 +1,10 @@
-
 /**
- * Enumeration class PathType - write a description of the enum class here
+ * Enumeration PathType
  *
- * @author (your name here)
- * @version (version number or date here)
+ * The different types paths can be
+ *
+ * @author Kevin C.
+ * @version 1.0
  */
 public enum PathType
 {

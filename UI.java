@@ -24,6 +24,7 @@ public class UI extends JFrame
     
     private void gui()
     {
+//<<<<<<< HEAD
         titleS = new JFrame("Flow 3D");        
         titleS.setVisible(true);
         titleS.setSize(800,800);
@@ -111,5 +112,22 @@ public class UI extends JFrame
                     hardS.setVisible(true);
                 }
             });
+/*=======
+        // Create display window/canvas
+        // Load menu
+        // wait for callback from menu to do the next thing: tutorial, game, exit, etc.
+        Display display = new Display(1200,800);
+        display.drawString("Flow 3D", 100,0, 250);
+        display.drawString("Play", 50, 0, 0);
+
+        display.addButton();
+        // To do this, create a subclass of DisplayButton
+        if(display.getButton().isPressed())
+        {
+
+            display.addButton("Back", , , 80, 50);
+        }
+        //menuFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+>>>>>>> a2ef72ce2d96052799e2fe569fe536a598008cfa*/
     }
 }
