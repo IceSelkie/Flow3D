@@ -30,7 +30,7 @@ import javax.swing.JPanel;
  * @author Stanley S.
  * @version 1.0
  */
-public class Display extends JPanel
+public class Display extends JPanel 
 {
   private List<DisplayElement> elements;
 

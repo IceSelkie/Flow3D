@@ -10,6 +10,7 @@ import java.awt.*;
  */
 public class Driver
 {
+    public static final boolean DEBUG = false;
     /**
      * Main: The game of Flow begins here.
      *
@@ -18,7 +19,7 @@ public class Driver
     public static void main(String[] args)
     {
         //TODO: Just about everything.
-        runGame();
+        UI u = new UI();
     }
 
 
@@ -29,16 +30,5 @@ public class Driver
     {
     }
 
-    /**
-     * An example of a method - replace this comment with your own
-     *
-     * @param y a sample parameter for a method
-     * @return the sum of x and y
-     */
-    public static void runGame()
-    {
-        // Create display window/canvas
-        // Load menu
-        // wait for callback from menu to do the next thing: tutorial, game, exit, etc.
-    }
+    
 }

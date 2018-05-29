@@ -24,4 +24,8 @@ public class Cube
         cubePaths[x][y][z] = input;
     }
     
+    public Path getPath(int x, int y, int z)
+    {
+        return cubePaths[x][y][z];
+    }
 }
