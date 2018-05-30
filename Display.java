@@ -24,7 +24,7 @@ import javax.swing.JPanel;
  * @author Stanley S.
  * @version 1.0
  */
-public class Display extends JPanel 
+public class Display extends JPanel
 {
   private List<DisplayElement> elements;
   private Graphics2D lastCanvas = null;
@@ -41,11 +41,11 @@ public class Display extends JPanel
    * @param width Width of the window in pixels. Note: there is a ~5pxl buffer on each side of the window.
    * @param height Height of the window in pixels. Note: There is a ~5pxl buffer on the bottom and ~40pxl buffer (menu bar) at the top of the window.
    */
-  public Display(int width, int height)
+  public Display(int width, int height, Color backgroundColor)
   {
     this.elements = Collections.synchronizedList(new LinkedList<DisplayElement>());
     this.setDoubleBuffered(true);
-    this.setBackground(Color.white);
+    this.setBackground(backgroundColor);
     new DisplayFrame(width,height,this);
   }
 
@@ -175,13 +175,14 @@ public class Display extends JPanel
    * @param xPos The x coordinate to center the String at.
    * @param yPos The bottom of where the string is to be drawn. (Danglers can drop below this line.)
    */
-  public Display drawString(String stringToDisplay, int fontSize, double xPos, double yPos)
+  public Display drawString(String stringToDisplay, int fontSize, double xPos, double yPos, int flags)
   {
+    //add((DisplayElement) (canvas,window_width,window_height) -> {canvas.;});
     add(new DisplayElement()
     {
       public void doCommand(Graphics2D canvas, int window_width, int window_height)
       {
-        canvas.setFont(new Font(canvas.getFont().getFontName(),Font.PLAIN,fontSize));
+        canvas.setFont(new Font(canvas.getFont().getFontName(),flags,fontSize));
         int strWidth = canvas.getFontMetrics(canvas.getFont()).stringWidth(stringToDisplay);
         canvas.drawString(stringToDisplay,(window_width-strWidth)/2+(int)xPos,window_height/2-(int)yPos);
       }
