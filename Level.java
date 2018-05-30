@@ -32,10 +32,10 @@ public class Level
     public void hard()
     {
         c = new Cube(4);
-        c.setPath(new Path(PathType.START, PathColor.PURPLE), 0, 0, 0);
+        c.setPath(new Path(PathType.START, PathColor.MAGENTA), 0, 0, 0);
         c.setPath(new Path(PathType.START, PathColor.GREEN), 0, 1, 0);
         c.setPath(new Path(PathType.START, PathColor.RED), 2, 1, 0);
-        c.setPath(new Path(PathType.START, PathColor.PURPLE), 2, 2, 0);
+        c.setPath(new Path(PathType.START, PathColor.MAGENTA), 2, 2, 0);
         c.setPath(new Path(PathType.START, PathColor.GREEN), 0, 3, 1);
         c.setPath(new Path(PathType.START, PathColor.RED), 2, 1, 1);
         c.setPath(new Path(PathType.START, PathColor.BLUE), 1, 3, 1);
