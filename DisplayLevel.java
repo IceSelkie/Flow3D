@@ -13,7 +13,7 @@ import static org.lwjgl.glfw.GLFW.*;
  */
 public class DisplayLevel extends DisplayableWindow
 {
-  Cube cube; // The level that is currently displayed.
+  Level cube; // The level that is currently displayed.
   int level; // Which level to display on the main display. The z-axis. 0 being top.
 
   /**
@@ -23,7 +23,7 @@ public class DisplayLevel extends DisplayableWindow
    *
    * @param cube The level data.
    */
-  public DisplayLevel(Cube cube)
+  public DisplayLevel(Level cube)
   {
     level = 0;
   }
