@@ -6,6 +6,6 @@
  * @author Stanley S. & Kaushik A.
  * @version 0.0 (Not Started)
  */
-public class DisplayLevel implements DisplayableWindow
+public class DisplayLevel extends DisplayableWindow
 {
 }
