@@ -1,4 +1,5 @@
-import java.awt.*;
+import java.awt.geom.Point2D;
+import java.util.List;
 
 /**
  * abstract class DisplayableWindow
@@ -6,17 +7,17 @@ import java.awt.*;
  * Interface for the window data and layout for a window, to display each window.
  *
  * @author Stanley S. & Kaushik A.
- * @version 0.0 (Not Started)
+ * @version 0.1 (WIP)
  */
 public abstract class DisplayableWindow
 {
   public DisplayableWindow()
   {}
 
-  public abstract List<Elements> getElements();
-  public abstract void doClick(int clickType, Point location);
-  public abstract void doDrag(Point location);
-  public abstract void doRelease(int clickType, Point location);
-  public abstract void doScroll(boolean directionIsUp, Point location);
+  public abstract List<Element> getElements();
+  public abstract void doClick(int clickType, Point2D location);
+  public abstract void doDrag(Point2D location);
+  public abstract void doRelease(int clickType, Point2D location);
+  public abstract void doScroll(boolean directionIsUp, Point2D location);
 
 }

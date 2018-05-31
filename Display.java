@@ -6,7 +6,6 @@ import org.lwjgl.system.*;
 import java.awt.*;
 import java.awt.geom.Point2D;
 import java.nio.*;
-import java.util.LinkedList;
 import java.util.Random;
 
 import static org.lwjgl.glfw.Callbacks.*;
@@ -22,8 +21,7 @@ public class Display {
   // The window handle
   private long window;
   WindowSize w;
-  private LinkedList<Point2D> clicks = new LinkedList<Point2D>();
-  private LinkedList<Point2D> o = new LinkedList<Point2D>();
+  DisplayableWindow currentlyDisplayed;
 
   public static void main(String[] args) {
     new Display().run();
@@ -66,11 +64,8 @@ public class Display {
     });
 
     glfwSetMouseButtonCallback(window,(window,button,action,mods)->{
-      if (button == GLFW_MOUSE_BUTTON_1)
-      {
-        clicks.add(getCursorLocation(getWindowSize()));
-        o.add(new Point2D.Double(0, 0));
-      }
+      if (currentlyDisplayed!=null)
+        currentlyDisplayed.doClick(button,getCursorLocation(w));
     });
 
     // Get the thread stack and push a new frame
@@ -173,6 +168,9 @@ public class Display {
     glEnd();
     */
 
+    for (Element element : currentlyDisplayed.getElements())
+      displayElement(element);
+    /*
     glBegin(GL_POINTS);
     for (int i = 0; i < clicks.size(); i++)
     {
@@ -192,6 +190,7 @@ public class Display {
       }
     }
     glEnd();
+    */
 
     //System.out.println(getWindowSize());
   }
@@ -222,6 +221,16 @@ public class Display {
 
 
 
+  public void setWindow(DisplayableWindow newWindow)
+  {
+    currentlyDisplayed = newWindow;
+  }
+
+  public void displayElement(Element element)
+  {
+    //TODO
+  }
+
   public WindowSize getWindowSize()
   {
     try ( MemoryStack stack = stackPush() )
@@ -238,7 +247,7 @@ public class Display {
     }
   }
 
-  public Point2D.Double getCursorLocation(WindowSize w)
+  public Point2D getCursorLocation(WindowSize w)
   {
     try (MemoryStack stack = stackPush())
     {
