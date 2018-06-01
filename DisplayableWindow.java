@@ -14,10 +14,13 @@ public abstract class DisplayableWindow
   public DisplayableWindow()
   {}
 
-  public abstract List<Element> getElements();
   public abstract void doClick(int clickType, Point2D location);
   public abstract void doDrag(Point2D location);
   public abstract void doRelease(int clickType, Point2D location);
   public abstract void doScroll(boolean directionIsUp, Point2D location);
 
+  public void display(Display.WindowSize w, long window)
+  {
+
+  }
 }
