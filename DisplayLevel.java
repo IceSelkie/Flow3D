@@ -35,8 +35,9 @@ public class DisplayLevel extends DisplayableWindow
       return;
     if (onAnotherLevel(location)!=level)
       level = onAnotherLevel(location);
-    if (onMainBoard(location))
-      clickedOnSquare = getSquare(lvl.size(),location);
+  //if (onMainBoard(location))
+    //clickedOnSquare = getSquare(lvl.size(),location);
+    System.out.println("Click registered at: ["+location.getX()+","+location.getY()+"].");
   }
 
   public void doDrag(Point2D location)
@@ -48,6 +49,10 @@ public class DisplayLevel extends DisplayableWindow
   public void doScroll(boolean directionIsUp, Point2D location)
   { }
 
+  public void display(long window)
+  {
+
+  }
 
 
   // **************** NON-IMPLEMENTED METHODS **************** // TODO

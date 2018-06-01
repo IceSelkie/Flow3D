@@ -19,8 +19,5 @@ public abstract class DisplayableWindow
   public abstract void doRelease(int clickType, Point2D location);
   public abstract void doScroll(boolean directionIsUp, Point2D location);
 
-  public void display(Display.WindowSize w, long window)
-  {
-
-  }
+  public abstract void display(long window);
 }
