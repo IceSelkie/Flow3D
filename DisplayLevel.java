@@ -1,5 +1,4 @@
-import java.awt.*;
-import java.awt.geom.Point2D;
+import java.awt.Point;
 import java.util.List;
 
 import static org.lwjgl.glfw.GLFW.*;
@@ -29,24 +28,25 @@ public class DisplayLevel extends DisplayableWindow
     level = 0;
   }
 
-  public void doClick(int clickType, Point2D location)
+  public void doClick(int clickType, Point location)
   {
+    System.out.println("Click registered at: ["+location.getX()+","+location.getY()+"].");
+
     if (clickType != GLFW_MOUSE_BUTTON_1)
       return;
     if (onAnotherLevel(location)!=level)
       level = onAnotherLevel(location);
   //if (onMainBoard(location))
     //clickedOnSquare = getSquare(lvl.size(),location);
-    System.out.println("Click registered at: ["+location.getX()+","+location.getY()+"].");
   }
 
-  public void doDrag(Point2D location)
+  public void doDrag(Point location)
   { }
 
-  public void doRelease(int clickType, Point2D location)
+  public void doRelease(int clickType, Point location)
   { }
 
-  public void doScroll(boolean directionIsUp, Point2D location)
+  public void doScroll(boolean directionIsUp, Point location)
   { }
 
   public void display(long window)
@@ -59,7 +59,7 @@ public class DisplayLevel extends DisplayableWindow
 
 
 
-  public int onAnotherLevel(Point2D clickLocation)
+  public int onAnotherLevel(Point clickLocation)
   {
     int x = (int) clickLocation.getX();
     int y = (int) clickLocation.getY();
@@ -72,14 +72,14 @@ public class DisplayLevel extends DisplayableWindow
     return level;
   }
 
-  public boolean onMainBoard(Point2D clickLocation)
+  public boolean onMainBoard(Point clickLocation)
   {
     int x = (int) clickLocation.getX();
     int y = (int) clickLocation.getY();
     return ((x >= 350 && x <= 750) && (y >= 50 && y <= 450));
   }
 
-  public Point getSquare(int cubeSize, Point2D clickLocation)
+  public Point getSquare(int cubeSize, Point clickLocation)
   {
     int x = (int) clickLocation.getX()-350;
     int y = (int) clickLocation.getY()-50;

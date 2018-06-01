@@ -3,7 +3,8 @@ import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 import org.lwjgl.system.*;
 
-import java.awt.*;
+import java.awt.Point;
+import java.awt.Color;
 import java.awt.geom.Point2D;
 import java.nio.*;
 import java.util.Random;
@@ -65,7 +66,7 @@ public class Display {
 
     glfwSetMouseButtonCallback(window,(window,button,action,mods)->{
       if (currentlyDisplayed!=null)
-        currentlyDisplayed.doClick(button,getCursorLocation(w));
+        currentlyDisplayed.doClick(button,getOriginFromCartesian(w,getCursorLocation(w)));
     });
 
     // Get the thread stack and push a new frame
@@ -168,8 +169,8 @@ public class Display {
     glEnd();
     */
 
-    for (Element element : currentlyDisplayed.getElements())
-      displayElement(element);
+    currentlyDisplayed.display(window);
+
     /*
     glBegin(GL_POINTS);
     for (int i = 0; i < clicks.size(); i++)
@@ -226,11 +227,6 @@ public class Display {
     currentlyDisplayed = newWindow;
   }
 
-  public void displayElement(Element element)
-  {
-    //TODO
-  }
-
   public WindowSize getWindowSize()
   {
     try ( MemoryStack stack = stackPush() )
@@ -261,6 +257,11 @@ public class Display {
     {
       return null;
     }
+  }
+
+  public Point getOriginFromCartesian(WindowSize w, Point2D cartesianPoint)
+  {
+    return new Point((int)(cartesianPoint.getX()+w.getWidth()/2D),(int)(w.getHeight()/2D-cartesianPoint.getY()));
   }
 
   public void drawLine(WindowSize w, float width, Color c, Point start, Point end)
