@@ -1,5 +1,4 @@
-import java.awt.geom.Point2D;
-import java.util.List;
+import java.awt.Point;
 
 /**
  * abstract class DisplayableWindow
@@ -14,13 +13,10 @@ public abstract class DisplayableWindow
   public DisplayableWindow()
   {}
 
-  public abstract void doClick(int clickType, Point2D location);
-  public abstract void doDrag(Point2D location);
-  public abstract void doRelease(int clickType, Point2D location);
-  public abstract void doScroll(boolean directionIsUp, Point2D location);
+  public abstract void doClick(int clickType, Point location);
+  public abstract void doDrag(Point location);
+  public abstract void doRelease(int clickType, Point location);
+  public abstract void doScroll(boolean directionIsUp, Point location);
 
-  public void display(Display.WindowSize w, long window)
-  {
-
-  }
+  public abstract void display(long window);
 }

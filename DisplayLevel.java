@@ -1,4 +1,4 @@
-import java.awt.geom.Point2D;
+import java.awt.Point;
 import java.util.List;
 
 import static org.lwjgl.glfw.GLFW.*;
@@ -13,7 +13,7 @@ import static org.lwjgl.glfw.GLFW.*;
  */
 public class DisplayLevel extends DisplayableWindow
 {
-  Level cube; // The level that is currently displayed.
+  Level lvl; // The level that is currently displayed.
   int level; // Which level to display on the main display. The z-axis. 0 being top.
 
   /**
@@ -27,27 +27,64 @@ public class DisplayLevel extends DisplayableWindow
   {
     level = 0;
   }
-  public List<Element> getElements()
-  {
-    return null;
-  }
 
-  public void doClick(int clickType, Point2D location)
+  public void doClick(int clickType, Point location)
   {
+    System.out.println("Click registered at: ["+location.getX()+","+location.getY()+"].");
+
     if (clickType != GLFW_MOUSE_BUTTON_1)
       return;
-    if (onAnotherLevel(location))
+    if (onAnotherLevel(location)!=level)
       level = onAnotherLevel(location);
-    if (onMainBoard(location))
-      clickedOnSquare getSquare(cube.size(),location);
+  //if (onMainBoard(location))
+    //clickedOnSquare = getSquare(lvl.size(),location);
   }
 
-  public void doDrag(Point2D location)
+  public void doDrag(Point location)
   { }
 
-  public void doRelease(int clickType, Point2D location)
+  public void doRelease(int clickType, Point location)
   { }
 
-  public void doScroll(boolean directionIsUp, Point2D location)
+  public void doScroll(boolean directionIsUp, Point location)
   { }
+
+  public void display(long window)
+  {
+
+  }
+
+
+  // **************** NON-IMPLEMENTED METHODS **************** // TODO
+
+
+
+  public int onAnotherLevel(Point clickLocation)
+  {
+    int x = (int) clickLocation.getX();
+    int y = (int) clickLocation.getY();
+    if (x >= 100 && x <= 250)
+    {
+      int offset = 725 - y;
+      if (offset % 175 <= 150)
+        return offset / 175 + 2;
+    }
+    return level;
+  }
+
+  public boolean onMainBoard(Point clickLocation)
+  {
+    int x = (int) clickLocation.getX();
+    int y = (int) clickLocation.getY();
+    return ((x >= 350 && x <= 750) && (y >= 50 && y <= 450));
+  }
+
+  public Point getSquare(int cubeSize, Point clickLocation)
+  {
+    int x = (int) clickLocation.getX()-350;
+    int y = (int) clickLocation.getY()-50;
+    if (x<0||x>=400||y<0||y>=400)
+      return null;
+    return new Point(cubeSize*x/400, cubeSize*y/400);
+  }
 }
