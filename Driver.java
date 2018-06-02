@@ -4,11 +4,12 @@
  * Has the main method to start the game of Flow3D.
  *
  * @author Kaushik A.
- * @version 0.1 (WIP)
+ * @version 1.0
  */
 public class Driver
 {
-    public static final boolean DEBUG = false;
+    public static final boolean DEBUG = true;
+
     /**
      * Main: The game of <i>Flow</i> begins now.
      *
@@ -16,7 +17,6 @@ public class Driver
      */
     public static void main(String[] args)
     {
-        //TODO: Just about everything.
-        UI myUI = new UI();
+        new Display(new DisplayMenu()).run();
     }
 }
