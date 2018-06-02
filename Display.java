@@ -9,6 +9,7 @@ import java.awt.geom.Point2D;
 import java.nio.*;
 import java.util.Random;
 
+import static java.lang.Math.*;
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -20,10 +21,14 @@ public class Display
 {
 
   public static final int FPS = 60;
+  public static final double ZDEPTHMODIFIER = 1D/500; // .002
   // The window handle
   private long window;
   static WindowSize w;
   DisplayableWindow currentlyDisplayed;
+  boolean mouseIsDown = false;
+  double scrollAmount = 0;
+
 
   public static void main(String[] args)
   {
@@ -69,22 +74,7 @@ public class Display
     if (window == NULL)
       throw new RuntimeException("Failed to create the GLFW window");
 
-    // Setup a key callback. It will be called every time a key is pressed, repeated or released.
-    glfwSetKeyCallback(window, (window, key, scancode, action, mods) ->
-    {
-      if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE)
-        glfwSetWindowShouldClose(window, true); // We will detect this in the rendering loop
-    });
-
-    glfwSetMouseButtonCallback(window, (window, button, action, mods) ->
-    {
-      if (currentlyDisplayed != null)
-        if (action == GLFW_PRESS)
-          currentlyDisplayed.doClick(button, getCursorLocationOrigin(w));
-        else
-          if (action == GLFW_RELEASE)
-            currentlyDisplayed.doRelease(button, getCursorLocationOrigin(w));
-    });
+    registerCallbacks();
 
     // Get the thread stack and push a new frame
     try (MemoryStack stack = stackPush())
@@ -115,6 +105,48 @@ public class Display
     glfwShowWindow(window);
   }
 
+  private void registerCallbacks()
+  {
+    // Setup a key callback. It will be called every time a key is pressed, repeated or released.
+    glfwSetKeyCallback(window, (window, key, scancode, action, mods) ->
+    {
+      if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE)
+        glfwSetWindowShouldClose(window, true); // We will detect this in the rendering loop
+    });
+
+    glfwSetMouseButtonCallback(window, (window, button, action, mods) ->
+    {
+      if (currentlyDisplayed != null)
+        if (action == GLFW_PRESS)
+        {
+          mouseIsDown = true;
+          currentlyDisplayed.doClick(button, getCursorLocationOrigin(w));
+        }
+        else
+          if (action == GLFW_RELEASE)
+          {
+            mouseIsDown = false;
+            currentlyDisplayed.doRelease(button, getCursorLocationOrigin(w));
+          }
+    });
+
+    glfwSetScrollCallback(window, (window, xoffset, yoffset) ->
+    {
+      scrollAmount += yoffset;
+      while (scrollAmount <= -1)
+      {
+        scrollAmount += 1;
+        currentlyDisplayed.doScroll(false, getCursorLocationOrigin(w));
+      }
+      while (scrollAmount >= 1)
+      {
+        scrollAmount -= 1;
+        currentlyDisplayed.doScroll(true, getCursorLocationOrigin(w));
+      }
+
+    });
+  }
+
   private void loop()
   {
     // This line is critical for LWJGL's interoperation with GLFW's
@@ -125,7 +157,7 @@ public class Display
     GL.createCapabilities();
 
     // Set the clear/background color
-    glClearColor(.3f, 0.7f, 0.6f, 0.0f);
+    glClearColor(0.0f, 0.0f, 0.25f, 1.0f); // Was that greenish: .3 .7 .6 .0
 
 
     // Run the rendering loop until the user has attempted to close
@@ -135,6 +167,8 @@ public class Display
     while (!glfwWindowShouldClose(window))
     {
       time = sleep(FPS, time);
+      if (mouseIsDown)
+        currentlyDisplayed.doDrag(getCursorLocationOrigin(w));
       //input();
       update();
       render();
@@ -240,22 +274,22 @@ public class Display
 
 
 
-  public static void doPointCart(double x, double y)
+  /*public static void doPointCart(double x, double y)
   {
     doPointCart(x, y, 0);
-  }
+  }*/
 
   public static void doPointCart(double x, double y, double depth)
   {
-    glVertex3d(x / (w.getWidth() / 2D), y / (w.getHeight() / 2D), depth);
+    glVertex3d(x / (w.getWidth() / 2D), y / (w.getHeight() / 2D), -depth);
   }
 
-  public static void doPointOr(int x, int y)
+  /*public static void doPointOr(double x, double y)
   {
     doPointCart(x - w.getWidth() / 2D, w.getHeight() / 2D - y, 0);
-  }
+  }*/
 
-  public static void doPointOr(int x, int y, double depth)
+  public static void doPointOr(double x, double y, double depth)
   {
     doPointCart(x - w.getWidth() / 2D, w.getHeight() / 2D - y, depth);
   }
@@ -290,11 +324,44 @@ public class Display
     glEnd();
   }
 
-  public void drawLineOr(Point start, Point end, double depth)
+  public static void drawLineOr(Point start, Point end, double depth)
   {
     glBegin(GL_LINES);
     doPointOr(start.x, start.y, depth);
     doPointOr(end.x, end.y, depth);
+    glEnd();
+  }
+
+  public static void doCircle(double xPos, double yPos, double radius, boolean fill, double depth)
+  {
+    int num_segments = (int)(7*radius);
+    double theta = 2 * PI / num_segments;
+
+    double tangetial_factor = tan(theta); //calculate the tangential factor
+    double radial_factor = cos(theta); //calculate the radial factor
+
+    double x = radius; //we start at angle = 0
+    double y = 0;
+
+    glBegin(fill?GL_POLYGON:GL_LINE_LOOP);
+    for(int i = 0; i < num_segments; i++)
+    {
+      doPointOr(xPos + x, yPos + y,depth);//output vertex
+
+      //calculate the tangential vector
+      //remember, the radial vector is (x, y)
+      //to get the tangential vector we flip those coordinates and negate one of them
+      double tx = -y;
+      double ty = x;
+
+      //add the tangential vector
+      x += tx * tangetial_factor;
+      y += ty * tangetial_factor;
+
+      //correct using the radial factor
+      x *= radial_factor;
+      y *= radial_factor;
+    }
     glEnd();
   }
 

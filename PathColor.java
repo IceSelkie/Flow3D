@@ -17,7 +17,7 @@ public enum PathColor
      *
      * @return The color equivalent to the value.
      */
-    public Color getColor()
+    public Color toColor()
     {
         switch (this)
         {

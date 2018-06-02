@@ -183,4 +183,10 @@ public class Point3I implements Serializable, Cloneable
     }
     return super.equals(obj);
   }
+
+  @Override
+  public String toString()
+  {
+    return "Point3I{"+getX()+","+getY()+","+getZ()+"}";
+  }
 }
