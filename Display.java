@@ -16,19 +16,29 @@ import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.system.MemoryStack.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
-public class Display {
+public class Display
+{
 
   public static final int FPS = 60;
   // The window handle
   private long window;
-  WindowSize w;
+  static WindowSize w;
   DisplayableWindow currentlyDisplayed;
 
-  public static void main(String[] args) {
-    new Display().run();
+  public static void main(String[] args)
+  {
+    Level level = new Level();
+    level.medium();
+    new Display(new DisplayLevel(level)).run();
   }
 
-  public void run() {
+  public Display(DisplayableWindow toDisplayFirst)
+  {
+    currentlyDisplayed = toDisplayFirst;
+  }
+
+  public void run()
+  {
     //System.out.println("Hello LWJGL " + Version.getVersion() + "!");
 
     init();
@@ -36,7 +46,8 @@ public class Display {
     terminate();
   }
 
-  private void init() {
+  private void init()
+  {
     // Prevent awt from interfering with this thread.
     System.setProperty("java.awt.headless", "true");
 
@@ -45,7 +56,7 @@ public class Display {
     GLFWErrorCallback.createPrint(System.err).set();
 
     // Initialize GLFW. Most GLFW functions will not work before doing this.
-    if ( !glfwInit() )
+    if (!glfwInit())
       throw new IllegalStateException("Unable to initialize GLFW");
 
     // Configure GLFW
@@ -55,22 +66,29 @@ public class Display {
 
     // Create the window
     window = glfwCreateWindow(800, 600, "Flow: 3D", NULL, NULL);
-    if ( window == NULL )
+    if (window == NULL)
       throw new RuntimeException("Failed to create the GLFW window");
 
     // Setup a key callback. It will be called every time a key is pressed, repeated or released.
-    glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
-      if ( key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE )
+    glfwSetKeyCallback(window, (window, key, scancode, action, mods) ->
+    {
+      if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE)
         glfwSetWindowShouldClose(window, true); // We will detect this in the rendering loop
     });
 
-    glfwSetMouseButtonCallback(window,(window,button,action,mods)->{
-      if (currentlyDisplayed!=null)
-        currentlyDisplayed.doClick(button,getOriginFromCartesian(w,getCursorLocation(w)));
+    glfwSetMouseButtonCallback(window, (window, button, action, mods) ->
+    {
+      if (currentlyDisplayed != null)
+        if (action == GLFW_PRESS)
+          currentlyDisplayed.doClick(button, getCursorLocationOrigin(w));
+        else
+          if (action == GLFW_RELEASE)
+            currentlyDisplayed.doRelease(button, getCursorLocationOrigin(w));
     });
 
     // Get the thread stack and push a new frame
-    try ( MemoryStack stack = stackPush() ) {
+    try (MemoryStack stack = stackPush())
+    {
       IntBuffer pWidth = stack.mallocInt(1); // int*
       IntBuffer pHeight = stack.mallocInt(1); // int*
 
@@ -116,7 +134,7 @@ public class Display {
     long time = System.nanoTime();
     while (!glfwWindowShouldClose(window))
     {
-      time = sleep(FPS,time);
+      time = sleep(FPS, time);
       //input();
       update();
       render();
@@ -126,9 +144,9 @@ public class Display {
 
   private long sleep(int updates_per_second, long last_execution)
   {
-    double maxSleepMS = 1000D/updates_per_second;
-    double msSinceLastSleep = (System.nanoTime()-last_execution)/1000000D;
-    if (maxSleepMS>msSinceLastSleep)
+    double maxSleepMS = 1000D / updates_per_second;
+    double msSinceLastSleep = (System.nanoTime() - last_execution) / 1000000D;
+    if (maxSleepMS > msSinceLastSleep)
     {
       //System.out.printf("Sleeping for \t"+(long)(maxSleepMS-msSinceLastSleep)+" of \t"+(long)maxSleepMS+"ms.\n");
       try {Thread.sleep((long) (maxSleepMS - msSinceLastSleep));} catch (InterruptedException e)
@@ -218,6 +236,70 @@ public class Display {
 
 
 
+  // **************** METHODS TO DRAW STUFF **************** //TODO
+
+
+
+  public static void doPointCart(double x, double y)
+  {
+    doPointCart(x, y, 0);
+  }
+
+  public static void doPointCart(double x, double y, double depth)
+  {
+    glVertex3d(x / (w.getWidth() / 2D), y / (w.getHeight() / 2D), depth);
+  }
+
+  public static void doPointOr(int x, int y)
+  {
+    doPointCart(x - w.getWidth() / 2D, w.getHeight() / 2D - y, 0);
+  }
+
+  public static void doPointOr(int x, int y, double depth)
+  {
+    doPointCart(x - w.getWidth() / 2D, w.getHeight() / 2D - y, depth);
+  }
+
+  public static void setColor3(Color c)
+  {
+    glColor3f(c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f);
+  }
+
+  public static void setColor3(int r, int g, int b)
+  {
+    glColor3f(r / 255f, g / 255f, b / 255f);
+  }
+
+  public static void setColor4(Color c)
+  {
+    glColor4f(c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f, c.getAlpha() / 255f);
+  }
+
+  public static void setColor4(int r, int g, int b, int a)
+  {
+    glColor4f(r / 255f, g / 255f, b / 255f, a / 255f);
+  }
+
+  public static void drawRectangleOr(int x, int y, int width, int height, double depth)
+  {
+    glBegin(GL_POLYGON);
+    doPointOr(x - width / 2, y - height / 2, depth);
+    doPointOr(x + width / 2, y - height / 2, depth);
+    doPointOr(x + width / 2, y + height / 2, depth);
+    doPointOr(x - width / 2, y + height / 2, depth);
+    glEnd();
+  }
+
+  public void drawLineOr(Point start, Point end, double depth)
+  {
+    glBegin(GL_LINES);
+    doPointOr(start.x, start.y, depth);
+    doPointOr(end.x, end.y, depth);
+    glEnd();
+  }
+
+
+
   // **************** MY METHODS FOR HELPING ME **************** //TODO
 
 
@@ -229,72 +311,67 @@ public class Display {
 
   public WindowSize getWindowSize()
   {
-    try ( MemoryStack stack = stackPush() )
+    try (MemoryStack stack = stackPush())
     {
       //int* width = malloc(1);
       IntBuffer pWidth = stack.mallocInt(1); // int*
       IntBuffer pHeight = stack.mallocInt(1); // int*
 
       glfwGetWindowSize(window, pWidth, pHeight);
-      return new WindowSize(pWidth.get(),pHeight.get());
+      return new WindowSize(pWidth.get(), pHeight.get());
     } catch (IllegalArgumentException e)
     {
-      return new WindowSize(0,0);
+      return new WindowSize(0, 0);
     }
   }
 
-  public Point2D getCursorLocation(WindowSize w)
+  public Point2D getCursorLocationCartesian(WindowSize w)
   {
     try (MemoryStack stack = stackPush())
     {
-      //int* width = malloc(1);
+      //double* x = malloc(1);
       DoubleBuffer x = stack.mallocDouble(1); // int*
       DoubleBuffer y = stack.mallocDouble(1); // int*
 
       glfwGetCursorPos(window, x, y);
-      return new Point2D.Double(2 * x.get() - w.getWidth(), w.getHeight() - 2 * y.get());
+      return new Point2D.Double(x.get() - w.getWidth() / 2D, w.getHeight() / 2D - y.get());
     } catch (IllegalArgumentException e)
     {
       return null;
     }
   }
 
-  public Point getOriginFromCartesian(WindowSize w, Point2D cartesianPoint)
+  public Point getCursorLocationOrigin(WindowSize w)
   {
-    return new Point((int)(cartesianPoint.getX()+w.getWidth()/2D),(int)(w.getHeight()/2D-cartesianPoint.getY()));
-  }
+    try (MemoryStack stack = stackPush())
+    {
+      //double* x = malloc(1);
+      DoubleBuffer x = stack.mallocDouble(1); // int*
+      DoubleBuffer y = stack.mallocDouble(1); // int*
 
-  public void drawLine(WindowSize w, float width, Color c, Point start, Point end)
-  {
-    glLineWidth(width);
-    glColor3f(c.getRed()/255f,c.getGreen()/255f,c.getBlue()/255f);
-    glBegin(GL_LINES);
-    glVertex2d(start.getX()/w.getWidth(),start.getY()/w.getHeight());
-    glVertex2d(end.getX()/w.getWidth(),end.getY()/w.getHeight());
-    glEnd();
-  }
+      glfwGetCursorPos(window, x, y);
 
-  public Point pt(int x, int y)
-  {
-    return new Point(x,y);
-  }
-
-  public Color randomColor(int seed)
-  {
-    Random r = new Random(seed);
-    return new Color(Math.abs((int)(r.nextLong()%256)),Math.abs((int)(r.nextLong()%256)),Math.abs((int)(r.nextLong()%256)));
+      return new Point((int) Math.round(x.get()), (int) Math.round(y.get()));
+    } catch (IllegalArgumentException e)
+    {
+      return null;
+    }
   }
 
   public class WindowSize
   {
     public final int w, h;
+
     public WindowSize(int width, int height)
     {
       w = width;
       h = height;
     }
+
     public int getWidth() {return w;}
+
     public int getHeight() {return h;}
-    public String toString() { return "WindowSize[width="+w+",height="+h+"]"; }
+
+    public String toString() { return "WindowSize[width=" + w + ",height=" + h + "]"; }
   }
 }
