@@ -1,5 +1,13 @@
 import java.io.Serializable;
 
+/**
+ * class Point3I
+ * <p>
+ * A three dimensional point of integers to represent a location is space.
+ *
+ * @author Stanley S.
+ * @version 1.1
+ */
 public class Point3I implements Serializable, Cloneable
 {
   /**
@@ -144,6 +152,34 @@ public class Point3I implements Serializable, Cloneable
   }
 
   /**
+   * Returns a new <code>Point3I</code> that has the position of
+   * the two <code>Point3I</code>s added together.
+   *
+   * @param pt the specified point to be added to this <code>Point3I</code>.
+   * @return the point who's position is the sum of this <code>Point3I</code>
+   * and the specified <code>Point3I</code>.
+   */
+  public Point3I add(Point3I pt)
+  {
+    return new Point3I(this.getX() + pt.getX(), this.getY() + pt.getY(), this.getZ() + pt.getZ());
+  }
+
+  /**
+   * Returns a new <code>Point3I</code> that has the position of
+   * the this <code>Point3I</code> added to the coordinates.
+   *
+   * @param x the X component to be added to this <code>Point3I</code>.
+   * @param y the Y component to be added to this <code>Point3I</code>.
+   * @param z the Z component to be added to this <code>Point3I</code>.
+   * @return the point who's position is the sum of this <code>Point3I</code>
+   * and the specified coordinates.
+   */
+  public Point3I add(int x, int y, int z)
+  {
+    return new Point3I(this.getX() + x, this.getY() + y, this.getZ() + z);
+  }
+
+  /**
    * Creates a new object of the same class and with the
    * same contents as this object.
    *
@@ -187,6 +223,6 @@ public class Point3I implements Serializable, Cloneable
   @Override
   public String toString()
   {
-    return "Point3I{"+getX()+","+getY()+","+getZ()+"}";
+    return "Point3I{" + getX() + "," + getY() + "," + getZ() + "}";
   }
 }

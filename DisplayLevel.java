@@ -1,3 +1,5 @@
+import org.lwjgl.glfw.GLFW;
+
 import java.awt.*;
 import java.util.LinkedList;
 
@@ -52,7 +54,7 @@ public class DisplayLevel extends DisplayableWindow
   /**
    * Constructor for DisplayLevel.
    * <p>
-   * Creates a new displayable window with the given cube, starting on the top level.
+   * Creates a new displayable window with the given level, starting on the top level.
    *
    * @param level The level data.
    */
@@ -62,6 +64,17 @@ public class DisplayLevel extends DisplayableWindow
     layer = 0;
   }
 
+  /**
+   * When the user clicks a location on the window, this
+   * will be called. Warning: This is asynchronous, and
+   * can happen at any time, EVEN WHEN OTHER METHODS ARE
+   * INPROGRESS.
+   * <p>
+   * This finds where the click, and takes the necessary action.
+   *
+   * @param clickType Enumeration of which mouse button was used to do the click. See {@link GLFW#GLFW_MOUSE_BUTTON_1} through {@link GLFW#GLFW_MOUSE_BUTTON_8}
+   * @param location  The point on the screen that was clicked.
+   */
   public void doClick(int clickType, Point location)
   {
     if (clickType != GLFW_MOUSE_BUTTON_1)
@@ -76,11 +89,33 @@ public class DisplayLevel extends DisplayableWindow
     Point3I cell = getSquare(location);
     if (cell!=null)
     {
-      dragPath = new LinkedList<>();
-      dragPath.add(getSquare(location));
+      Path path = lvl.get(cell);
+      if (path!=null)
+      {
+        LinkedList<Point3I> flow = lvl.getFlow(path.getColor());
+
+        if (flow.contains(cell))
+        {
+          dragPath = flow;
+          doDrag(location);
+        }
+        else
+        {
+          dragPath = new LinkedList<>();
+          dragPath.add(getSquare(location));
+        }
+      }
     }
   }
 
+  /**
+   * When the user clicks and holds, then moves the mouse,
+   * this will be called. Warning: This is asynchronous, and
+   * can happen at any time, EVEN WHEN OTHER METHODS ARE
+   * INPROGRESS.
+   *
+   * @param location The point on the screen where the mouse was moved to.
+   */
   public void doDrag(Point location)
   {
     if (dragPath == null)
@@ -100,25 +135,49 @@ public class DisplayLevel extends DisplayableWindow
     }
   }
 
+  /**
+   * When the user clicks, then lets go, this will be
+   * called. Warning: This is asynchronous, and can happen
+   * at any time, EVEN WHEN OTHER METHODS ARE INPROGRESS.
+   *
+   * @param clickType Enumeration of which mouse button was used to do the click. See {@link GLFW#GLFW_MOUSE_BUTTON_1} through {@link GLFW#GLFW_MOUSE_BUTTON_8}
+   * @param location  The point on the screen where the mouse is, upon being released.
+   */
   public void doRelease(int clickType, Point location)
   {
     makeDragPermanent();
     dragPath = null;
   }
 
+  /**
+   * When the user attempts to scroll, this will be
+   * called. Warning: This is asynchronous, and can happen
+   * at any time, EVEN WHEN OTHER METHODS ARE INPROGRESS.
+   *
+   * @param directionIsUp This will be {@code true}, if the scroll is upward.
+   * @param location      The point on the screen where the mouse is, when it is scrolled.
+   */
   public void doScroll(boolean directionIsUp, Point location)
   {
     System.out.println("An " + (directionIsUp?"upward":"downward")+ " scroll has been registered!");
-    if (directionIsUp && layer + 1 < lvl.size())
-      layer++;
-    if (!directionIsUp && layer > 0)
-      layer--;
+    if (!onMainBoard(location) || lvl.isDrawable(getSquare(location).add(0,0,directionIsUp?1:-1)))
+    {
+      if (directionIsUp && layer + 1 < lvl.size())
+        layer++;
+      if (!directionIsUp && layer > 0)
+        layer--;
+    }
 
-    // If the mouse is currently held down
+    // If the mouse is currently held down, then we are drawing a path to a new layer.
     if (dragPath != null)
       doDrag(location);
   }
 
+  /**
+   * Abstract method to be implemented by subclasses to do the actual rendering of the window.
+   *
+   * @param window The GLFWwindow pointer that holds the window's data. Needed to do any displaying.
+   */
   public void display(long window)
   {
     Display.setColor3(new Color( 191, 191, 191));
@@ -142,7 +201,7 @@ public class DisplayLevel extends DisplayableWindow
 
 
 
-  public int onAnotherLevel(Point clickLocation)
+  private int onAnotherLevel(Point clickLocation)
   {
     final int quantity = lvl.size();
     final int yMid = displayLocations_WindowHeight/2;
@@ -165,14 +224,14 @@ public class DisplayLevel extends DisplayableWindow
     return layer;
   }
 
-  public boolean onMainBoard(Point clickLocation)
+  private boolean onMainBoard(Point clickLocation)
   {
     int x = (int) clickLocation.getX();
     int y = (int) clickLocation.getY();
     return ((x >= displayLocations_GameLeft && x <= displayLocations_GameRight) && (y >= displayLocations_GameTop && y <= displayLocations_GameBottom));
   }
 
-  public Point3I getSquare(Point clickLocation)
+  private Point3I getSquare(Point clickLocation)
   {
     if (!onMainBoard(clickLocation))
       return null;
@@ -192,7 +251,15 @@ public class DisplayLevel extends DisplayableWindow
 
   private void makeDragPermanent()
   {
-    //TODO
+    PathColor clr = lvl.get(dragPath.getFirst()).getColor();
+    lvl.reset(clr);
+    for (int i = 1; i<dragPath.size(); i++)
+    {
+      // lvl.setPath(dragPath.get(i-1),dragPath.get(i))
+      lvl.setPath(clr,dragPath.get(i));
+      lvl.get(dragPath.get(i-1)).setDirection(PathDirection.get(dragPath.get(i-1),dragPath.get(i)));
+    }
+
   }
 
   private void drawLayerOr(int layer, double xPos, double yPos, double width, double depth)
@@ -253,32 +320,49 @@ public class DisplayLevel extends DisplayableWindow
     if (path.getType() == PathType.PATH)
       Display.doCircle(xPos + width / 2D, yPos + width / 2D, width / 4D, false, depth);
 
-
-    if (path.hasConnection(Path.OUT))
+    PathDirection nextDirection = path.getDirection();
+    if (nextDirection!=null)
+    switch (nextDirection)
     {
-      //caret;
-    }
-    if (path.hasConnection(Path.IN))
-    {
-      //vee;
-    }
-    if (path.hasConnection(Path.RIGHT))
-    {
-      glBegin(GL_POLYGON);
-      Display.doPointOr(xPos, yPos - width / 4D, depth);
-      Display.doPointOr(xPos + width, yPos - width / 4D, depth);
-      Display.doPointOr(xPos + width, yPos + width / 4D, depth);
-      Display.doPointOr(xPos, yPos + width / 4D, depth);
-      glEnd();
-    }
-    if (path.hasConnection(Path.DOWN))
-    {
-      glBegin(GL_POLYGON);
-      Display.doPointOr(xPos - width / 4D, yPos, depth);
-      Display.doPointOr(xPos - width / 4D, yPos + width, depth);
-      Display.doPointOr(xPos + width / 4D, yPos + width, depth);
-      Display.doPointOr(xPos + width / 4D, yPos, depth);
-      glEnd();
+      case IN:
+        //vee; TODO: IF THE CONNECTION IS TO HERE, THIS WILL NOT BE DRAWN. ONLY IF FROM HERE TO THERE.
+        break;
+      case OUT:
+        //caret; TODO: IF THE CONNECTION IS TO HERE, THIS WILL NOT BE DRAWN. ONLY IF FROM HERE TO THERE.
+        break;
+      case UP:
+        glBegin(GL_POLYGON);
+        Display.doPointOr(xPos - width / 4D, yPos - width, depth);
+        Display.doPointOr(xPos - width / 4D, yPos, depth);
+        Display.doPointOr(xPos + width / 4D, yPos, depth);
+        Display.doPointOr(xPos + width / 4D, yPos - width, depth);
+        glEnd();
+        break;
+      case DOWN:
+        glBegin(GL_POLYGON);
+        Display.doPointOr(xPos - width / 4D, yPos, depth);
+        Display.doPointOr(xPos - width / 4D, yPos + width, depth);
+        Display.doPointOr(xPos + width / 4D, yPos + width, depth);
+        Display.doPointOr(xPos + width / 4D, yPos, depth);
+        glEnd();
+        break;
+      case LEFT:
+        glBegin(GL_POLYGON);
+        Display.doPointOr(xPos - width, yPos - width / 4D, depth);
+        Display.doPointOr(xPos, yPos - width / 4D, depth);
+        Display.doPointOr(xPos, yPos + width / 4D, depth);
+        Display.doPointOr(xPos - width, yPos + width / 4D, depth);
+        glEnd();
+        break;
+      case RIGHT:
+        glBegin(GL_POLYGON);
+        Display.doPointOr(xPos, yPos - width / 4D, depth);
+        Display.doPointOr(xPos + width, yPos - width / 4D, depth);
+        Display.doPointOr(xPos + width, yPos + width / 4D, depth);
+        Display.doPointOr(xPos, yPos + width / 4D, depth);
+        glEnd();
+        break;
+      default:
     }
   }
 }
