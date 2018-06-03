@@ -1,3 +1,5 @@
+import java.awt.Point;
+
 /**
  * class DisplayMenu
  *
@@ -8,18 +10,22 @@
  */
 public class DisplayMenu extends DisplayableWindow
 {
+    Point firstLocation; //location of initial mouse click
+    int click; //clicktype of initial mouse click
+    
     /**
      * Constructor for Displaymenu
      */
     public DisplayMenu()
     {
-
     }
 
     /**
-     *  Return the element list
+     * Display the menu screen
+     * 
+     * @param window window address
      */
-    public List<Elements> getElements()
+    public void display(long window)
     {
         
     }
@@ -32,7 +38,11 @@ public class DisplayMenu extends DisplayableWindow
      */
     public void doClick(int clickType, Point location)
     {
+        //if (clickType != GLFW_MOUSE_BUTTON_1)
+        //    return;
         
+        click = clickType;
+        firstLocation = location;   
     }
 
     /**
@@ -41,8 +51,8 @@ public class DisplayMenu extends DisplayableWindow
      *  @param location  
      */
     public void doDrag(Point location)
-    {
-        
+    {  
+        //not used
     }
 
     /**
@@ -53,7 +63,8 @@ public class DisplayMenu extends DisplayableWindow
      */
     public void doRelease(int clickType, Point location)
     {
-        
+        if(location.equals(firstLocation) && clickType == click)
+        {}
     }
 
     /**
@@ -64,6 +75,6 @@ public class DisplayMenu extends DisplayableWindow
      */
     public void doScroll(boolean directionIsUp, Point location)
     {
-        
+        //not used
     }
 }
