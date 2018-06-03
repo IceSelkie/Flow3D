@@ -23,8 +23,22 @@ public class DisplaySelect extends DisplayableWindow
   protected static final int displayLocations_ButtonHeight = 50;
   protected static final int displayLocations_ButtonBuffer = 50;
   protected static final int displayLocations_ButtonBufferedSizeY = displayLocations_ButtonHeight+displayLocations_ButtonBuffer;
+  protected static final int displayLocations_ButtonSideLeft = displayLocations_WindowCenterX-(displayLocations_ButtonWidth/2);
+  protected static final int displayLocations_ButtonSideRight = displayLocations_WindowCenterX+(displayLocations_ButtonWidth/2);
 
   private ArrayList<Level> levels;
+  private int clicked = -1; // Clicked window
+  private int fade;
+  private boolean fadeIn;
+  private float[] hoverPhase;
+
+  public DisplaySelect(ArrayList<Level> levels)
+  {
+    this.levels = levels;
+    fade = 60;
+    fadeIn = true;
+    hoverPhase = new float[levels.size()];
+  }
 
   /**
    * When the user clicks a location on the window, this
@@ -37,7 +51,9 @@ public class DisplaySelect extends DisplayableWindow
    */
   public void doClick(int clickType, Point location)
   {
-
+    int buttonOver = getOverButton(location);
+    if (buttonOver!=-1)
+      clicked = buttonOver;
   }
 
   /**
@@ -63,20 +79,21 @@ public class DisplaySelect extends DisplayableWindow
    */
   public void doRelease(int clickType, Point location)
   {
-
+    if (clicked!=-1)
+    {
+      int buttonOver = getOverButton(location);
+      if (buttonOver == clicked)
+        fadeIn=false;
+    }
   }
 
   /**
-   * When the user attempts to scroll, this will be
-   * called. Warning: This is asynchronous, and can happen
-   * at any time, EVEN WHEN OTHER METHODS ARE INPROGRESS.
-   *
-   * @param directionIsUp This will be {@code true}, if the scroll is upward.
-   * @param location      The point on the screen where the mouse is, when it is scrolled.
+   * Scroll is not used in DisplaySelect.
+   * Inherited from {@link DisplayableWindow}.
    */
   public void doScroll(boolean directionIsUp, Point location)
   {
-
+    return;
   }
 
   /**
@@ -86,38 +103,67 @@ public class DisplaySelect extends DisplayableWindow
    */
   public void display(long window)
   {
+    int overButton = getOverButton(Display.getCursorLocationOrigin(Display.w));
+    if (fadeIn && fade>0)
+      fade--;
+    if (fade==60)
+      Display.setDisplay(new DisplayLevel(levels.get(clicked)));
+    if (clicked!=-1 && !fadeIn)
+      fade++;
+
     int numLevels = levels.size();
     for (int i = 0; i < numLevels; i++)
     {
-      // Button outline. depth = .5;
-      Display.setColor3(new Color(191, 191, 191));
-      Display.drawRectangleOr(displayLocations_WindowCenterX,displayLocations_WindowCenterY+displayLocations_ButtonBuffer*i-displayLocations_ButtonBuffer*numLevels,displayLocations_ButtonWidth,displayLocations_ButtonHeight,false,.5);
+      if (overButton==i)
+        hoverPhase[overButton]=Math.min(1,hoverPhase[overButton]+1f/30);
+      else
+        hoverPhase[overButton]=Math.max(0,hoverPhase[overButton]-1f/30);
+
+      // Button outline. depth = .5; Changes when clicked. Cuz that will look cool.
+      if (clicked != i)
+        Display.setColor3(new Color(191*(1-hoverPhase[i])+97*(hoverPhase[i]), 191*(1-hoverPhase[i])+210*(hoverPhase[i]), 191*(1-hoverPhase[i])+97*(hoverPhase[i])));
+      else
+        Display.setColor3(new Color(127, 127, 255));
+      Display.drawRectangleOr(displayLocations_WindowCenterX, displayLocations_WindowCenterY + displayLocations_ButtonBufferedSizeY * i - displayLocations_ButtonBuffer * numLevels, displayLocations_ButtonWidth, displayLocations_ButtonHeight, false, .5);
 
       // Button background. depth = -.9;
       Display.setColor3(new Color(0, 0, 95));
-      Display.drawRectangleOr(displayLocations_WindowCenterX,displayLocations_WindowCenterY+displayLocations_ButtonBuffer*i-displayLocations_ButtonBuffer*numLevels,displayLocations_ButtonWidth,displayLocations_ButtonHeight,true,-.9);
+      Display.drawRectangleOr(displayLocations_WindowCenterX, displayLocations_WindowCenterY + displayLocations_ButtonBufferedSizeY * i - displayLocations_ButtonBuffer * numLevels, displayLocations_ButtonWidth, displayLocations_ButtonHeight, true, -.9);
 
       // The contents of the button: ie: text and color, etc.
-      buttonDisplay(i,levels.get(i));
+      buttonDisplay(i, levels.get(i));
     }
+
+    //Draw fade. depth = .95;
   }
   private void buttonDisplay(int numFromBottom, Level level)
   {
-    Level compare = new Level();
+    switch (numFromBottom)
+    {
+      case 2:
+        Display.setColor3(PathColor.GREEN.toColor());
+        break;
+      case 1:
+        Display.setColor3(PathColor.YELLOW.toColor());
+        break;
+      case 0:
+        Display.setColor3(PathColor.RED.toColor());
+        break;
+      //default:
+    }
+    Display.drawRectangleOr(displayLocations_WindowCenterX,displayLocations_WindowCenterY+displayLocations_ButtonBufferedSizeY*numFromBottom-displayLocations_ButtonBuffer*levels.size(),displayLocations_ButtonWidth,displayLocations_ButtonHeight,true, 0);
+  }
 
-    compare.easy();
-    if (level.equals(compare))
-    Display.setColor3(PathColor.GREEN.toColor());
-
-    compare.medium();
-    if (level.equals(compare))
-    Display.setColor3(PathColor.YELLOW.toColor());
-
-    compare.hard();
-    if (level.equals(compare))
-    Display.setColor3(PathColor.RED.toColor());
-
-    Display.drawRectangleOr(displayLocations_WindowCenterX,displayLocations_WindowCenterY+displayLocations_ButtonBuffer*numFromBottom-displayLocations_ButtonBuffer*levels.size(),displayLocations_ButtonWidth,displayLocations_ButtonHeight,true, 0);
-
+  private int getOverButton(Point location)
+  {
+    int x = (int)location.getX();
+    int y = (int)location.getY();
+    if (x>=displayLocations_ButtonSideLeft && x<=displayLocations_ButtonSideRight)
+    {
+      y= (displayLocations_WindowCenterY+displayLocations_ButtonBuffer*levels.size()+displayLocations_ButtonHeight/2) - y;
+      if (y%displayLocations_ButtonBufferedSizeY<displayLocations_ButtonHeight)
+        return y/displayLocations_ButtonBufferedSizeY;
+    }
+    return -1;
   }
 }

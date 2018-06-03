@@ -1,3 +1,4 @@
+import com.sun.istack.internal.NotNull;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 import org.lwjgl.system.*;
@@ -23,15 +24,20 @@ public class Display
   public static final int FPS = 60;
   public static final double ZDEPTHMODIFIER = 1D/500; // .002
   // The window handle
-  private long window;
+  private static long window;
   static WindowSize w;
-  DisplayableWindow currentlyDisplayed;
+  static DisplayableWindow currentlyDisplayed;
   boolean mouseIsDown = false;
   double scrollAmount = 0;
 
   public Display(DisplayableWindow toDisplayFirst)
   {
     currentlyDisplayed = toDisplayFirst;
+  }
+
+  public static void setDisplay(@NotNull DisplayableWindow display)
+  {
+    currentlyDisplayed = display;
   }
 
   public void run()
@@ -400,7 +406,7 @@ public class Display
     }
   }
 
-  public Point getCursorLocationOrigin(WindowSize w)
+  public static Point getCursorLocationOrigin(WindowSize w)
   {
     try (MemoryStack stack = stackPush())
     {
