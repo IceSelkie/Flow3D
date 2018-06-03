@@ -1,13 +1,13 @@
-import org.lwjgl.*;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 import org.lwjgl.system.*;
 
-import java.awt.Point;
 import java.awt.Color;
+import java.awt.Point;
 import java.awt.geom.Point2D;
-import java.nio.*;
-import java.util.Random;
+
+import java.nio.IntBuffer;
+import java.nio.DoubleBuffer;
 
 import static java.lang.Math.*;
 import static org.lwjgl.glfw.Callbacks.*;
@@ -28,14 +28,6 @@ public class Display
   DisplayableWindow currentlyDisplayed;
   boolean mouseIsDown = false;
   double scrollAmount = 0;
-
-
-  public static void main(String[] args)
-  {
-    Level level = new Level();
-    level.medium();
-    new Display(new DisplayLevel(level)).run();
-  }
 
   public Display(DisplayableWindow toDisplayFirst)
   {
@@ -67,7 +59,7 @@ public class Display
     // Configure GLFW
     glfwDefaultWindowHints(); // optional, the current window hints are already the default
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); // the window will stay hidden after creation
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE); // the window will be resizable
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE); // the window will not be resizable
 
     // Create the window
     window = glfwCreateWindow(800, 600, "Flow: 3D", NULL, NULL);
@@ -314,9 +306,9 @@ public class Display
     glColor4f(r / 255f, g / 255f, b / 255f, a / 255f);
   }
 
-  public static void drawRectangleOr(int x, int y, int width, int height, double depth)
+  public static void drawRectangleOr(int x, int y, int width, int height, boolean fill, double depth)
   {
-    glBegin(GL_POLYGON);
+    glBegin(fill?GL_POLYGON:GL_LINE_LOOP);
     doPointOr(x - width / 2, y - height / 2, depth);
     doPointOr(x + width / 2, y - height / 2, depth);
     doPointOr(x + width / 2, y + height / 2, depth);

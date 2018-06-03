@@ -1,14 +1,12 @@
-import java.awt.Point;
+import org.lwjgl.glfw.GLFW;
+
+import java.awt.*;
 import java.util.ArrayList;
-import apcslib.*;
-import chn.util.*;
-import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_1;
-import static org.lwjgl.opengl.GL11.*;
 
 
 /**
  * class DisplaySelect
- *
+ * <p>
  * The window data and layout for the window of the menu to select the different layers to play.
  *
  * @author Kevin C.
@@ -19,74 +17,107 @@ public class DisplaySelect extends DisplayableWindow
   //window size
   protected static final int displayLocations_WindowWidth = 800;
   protected static final int displayLocations_WindowHeight = 600;
-  protected static final int displayLocations_WindowCenterX = displayLocations_WindowWidth/2;
-  protected static final int displayLocations_WindowCenterY = displayLocations_WindowHeight/2;  
-    
-  private ArrayList<Level> levelTypes;
+  protected static final int displayLocations_WindowCenterX = displayLocations_WindowWidth / 2;
+  protected static final int displayLocations_WindowCenterY = displayLocations_WindowHeight / 2;
+  protected static final int displayLocations_ButtonWidth = 200;
+  protected static final int displayLocations_ButtonHeight = 50;
+  protected static final int displayLocations_ButtonBuffer = 50;
+  protected static final int displayLocations_ButtonBufferedSizeY = displayLocations_ButtonHeight+displayLocations_ButtonBuffer;
+
+  private ArrayList<Level> levels;
+
   /**
-   * Constructor: Creates Display select object and instantiates leveTypes ArrayList as empty array. 
+   * When the user clicks a location on the window, this
+   * will be called. Warning: This is asynchronous, and
+   * can happen at any time, EVEN WHEN OTHER METHODS ARE
+   * INPROGRESS.
+   *
+   * @param clickType Enumeration of which mouse button was used to do the click. See {@link GLFW#GLFW_MOUSE_BUTTON_1} through {@link GLFW#GLFW_MOUSE_BUTTON_8}
+   * @param location  The point on the screen that was clicked.
    */
-  public DisplaySelect()
-  {
-      levelTypes = new ArrayList<Level>();
-  }
-  /**
-   * <b>Summary</b> Adds a level to the expandable ArrayList of Levels.
-   */
-  public void addLevelType(Level input)
-  {
-      levelTypes.add(input);
-  }
-  /**
-   * <b>Summary</b> Returns level stored in ArrayList levelTypes given recieved index
-   * @return Level at index
-   */
-  public Level getLevel(int index)
-  {
-      return levelTypes.get(index);
-  }
-  
   public void doClick(int clickType, Point location)
   {
-    if (clickType != GLFW_MOUSE_BUTTON_1)
-      return;
 
-    if (Driver.DEBUG) System.out.println("Click registered at: [" + location.getX() + "," + location.getY() + "].");
+  }
 
-    layer = onAnotherLevel(location);
-    //if (onMainBoard(location))
-    //clickedOnSquare = getSquare(lvl.size(),location);
+  /**
+   * When the user clicks and holds, then moves the mouse,
+   * this will be called. Warning: This is asynchronous, and
+   * can happen at any time, EVEN WHEN OTHER METHODS ARE
+   * INPROGRESS.
+   *
+   * @param location The point on the screen where the mouse was moved to.
+   */
+  public void doDrag(Point location)
+  {
 
-    Point3I cell = getSquare(location);
-    if (cell!=null)
+  }
+
+  /**
+   * When the user clicks, then lets go, this will be
+   * called. Warning: This is asynchronous, and can happen
+   * at any time, EVEN WHEN OTHER METHODS ARE INPROGRESS.
+   *
+   * @param clickType Enumeration of which mouse button was used to do the click. See {@link GLFW#GLFW_MOUSE_BUTTON_1} through {@link GLFW#GLFW_MOUSE_BUTTON_8}
+   * @param location  The point on the screen where the mouse is, upon being released.
+   */
+  public void doRelease(int clickType, Point location)
+  {
+
+  }
+
+  /**
+   * When the user attempts to scroll, this will be
+   * called. Warning: This is asynchronous, and can happen
+   * at any time, EVEN WHEN OTHER METHODS ARE INPROGRESS.
+   *
+   * @param directionIsUp This will be {@code true}, if the scroll is upward.
+   * @param location      The point on the screen where the mouse is, when it is scrolled.
+   */
+  public void doScroll(boolean directionIsUp, Point location)
+  {
+
+  }
+
+  /**
+   * Abstract method to be implemented by subclasses to do the actual rendering of the window.
+   *
+   * @param window The GLFWwindow pointer that holds the window's data. Needed to do any displaying.
+   */
+  public void display(long window)
+  {
+    int numLevels = levels.size();
+    for (int i = 0; i < numLevels; i++)
     {
-      dragPath = new LinkedList<>();
-      dragPath.add(getSquare(location));
+      // Button outline. depth = .5;
+      Display.setColor3(new Color(191, 191, 191));
+      Display.drawRectangleOr(displayLocations_WindowCenterX,displayLocations_WindowCenterY+displayLocations_ButtonBuffer*i-displayLocations_ButtonBuffer*numLevels,displayLocations_ButtonWidth,displayLocations_ButtonHeight,false,.5);
+
+      // Button background. depth = -.9;
+      Display.setColor3(new Color(0, 0, 95));
+      Display.drawRectangleOr(displayLocations_WindowCenterX,displayLocations_WindowCenterY+displayLocations_ButtonBuffer*i-displayLocations_ButtonBuffer*numLevels,displayLocations_ButtonWidth,displayLocations_ButtonHeight,true,-.9);
+
+      // The contents of the button: ie: text and color, etc.
+      buttonDisplay(i,levels.get(i));
     }
   }
-  public void doDrag(Point location){
-    if (dragPath == null)
-      return;
-
-    Point3I cell = getSquare(location);
-
-    if (cell != null && !dragPath.getLast().equals(cell))
-    {
-      while (dragPath.contains(cell))
-        dragPath.removeLast();
-      dragPath.add(cell);
-      System.out.print("The drag path is: [");
-      for (Point3I p : dragPath)
-        System.out.print(p.toString() + ",");
-      System.out.println("].");
-    }
-    }
-  public void doRelease(int clickType, Point location)
-  {}
-  public  void doScroll(boolean directionIsUp, Point location)
-  {}
-  public void display(@NativeType("GLFWwindow *") long window)
+  private void buttonDisplay(int numFromBottom, Level level)
   {
+    Level compare = new Level();
+
+    compare.easy();
+    if (level.equals(compare))
+    Display.setColor3(PathColor.GREEN.toColor());
+
+    compare.medium();
+    if (level.equals(compare))
+    Display.setColor3(PathColor.YELLOW.toColor());
+
+    compare.hard();
+    if (level.equals(compare))
+    Display.setColor3(PathColor.RED.toColor());
+
+    Display.drawRectangleOr(displayLocations_WindowCenterX,displayLocations_WindowCenterY+displayLocations_ButtonBuffer*numFromBottom-displayLocations_ButtonBuffer*levels.size(),displayLocations_ButtonWidth,displayLocations_ButtonHeight,true, 0);
 
   }
 }
