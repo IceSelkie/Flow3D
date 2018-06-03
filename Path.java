@@ -7,19 +7,19 @@
  */
 public class Path
 {
+     
     PathType type;
     PathColor color;
-    Path next;
-    Path previous;
+    PathDirection direction;
+    //six enumerations of direction to determine where the next Path object exists. (.hasConnection)
     /**
      * <b>Summary</b> Constructor for objects of class Path
      */
-    public Path(PathType inputType, PathColor inputColor, Path inputNext, Path inputPrevious)
+    public Path(PathType inputType, PathColor inputColor, PathDirection inputDirection)
     {
         type = inputType;
         color = inputColor;
-        next = inputNext;
-        previous = inputPrevious;
+        direction = inputDirection;
     }
     /**
      * <b>Summary</b> Constructor for objects of Path class for initial Path location. 
@@ -28,14 +28,17 @@ public class Path
     {
         type = inputType;
         color = inputColor;
-        next = previous = null;
+        direction = null;
     }
     /**
-     * <b>Summary</b> Method for inserting new Path.
+     * <b>Summary</b> Method for checking if Path has connection
+     * @return boolean that determines if Path has connection
      */
-    public void insert(Path input, PathType inputType, PathColor inputColor)
+    public boolean hasConection()
     {
-        
+        if(direction==null)
+            return false;
+        return true;       
     }
     /**
      * <b>Summary</b> Set Path Type
@@ -52,6 +55,13 @@ public class Path
         color = inputColor;
     }
     /**
+     * <b>Summary</b> Set Path Direction
+     */
+    public void setDirection(PathDirection inputDirection)
+    {
+        direction = inputDirection;
+    }
+    /**
      * <b>Summary</b>Returns Path Type
      * @return type
      */
@@ -66,5 +76,13 @@ public class Path
     public PathColor getColor()
     {
         return color;
+    }
+    /**
+     * <b>Summary</b>Returns Path direction
+     * @return direction
+     */
+    public PathDirection getDirection()
+    {
+        return direction;
     }
 }
