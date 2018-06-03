@@ -9,13 +9,15 @@ public class Cube
 {
     // instance variables - replace the example below with your own
     private Path[][][] cubePaths;
-
+    private int size;
+    
     /**
      * Constructor for objects of class Cube
      */
     public Cube(int sideLength)
     {
         cubePaths = new Path[sideLength][sideLength][sideLength];
+        size= sideLength;
     }
     
     //public void setPath(int x, int y, int z);
@@ -24,8 +26,13 @@ public class Cube
         cubePaths[x][y][z] = input;
     }
     
-    public Path getPath(int x, int y, int z)
+    public Path getPath(Point3I p)
     {
-        return cubePaths[x][y][z];
+        return cubePaths[p.getX()][p.getY()][p.getZ()];
+    }
+    
+    public int size()
+    {
+        return size;
     }
 }

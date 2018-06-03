@@ -17,6 +17,7 @@ public class Driver
      */
     public static void main(String[] args)
     {
-        new Display(new DisplayMenu()).run();
+        //new Display(new DisplayMenu()).run();
+        Test t = new Test();
     }
 }
