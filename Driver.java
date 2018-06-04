@@ -11,13 +11,13 @@ public class Driver
     public static final boolean DEBUG = true;
 
     /**
-     * Main: The game of <i>Flow</i> begins now.
+     * Main: Let the wonderful game of <i>Flow</i> commence.
      *
      * @param args Command line arguments passed to the program at start. Currently unused.
      */
     public static void main(String[] args)
     {
-        //new Display(new DisplayMenu()).run();
-        Test t = new Test();
+        new Display(new DisplayMenu()).run();
+        //Test t = new Test();
     }
 }

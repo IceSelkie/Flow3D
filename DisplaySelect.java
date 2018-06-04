@@ -2,6 +2,7 @@ import org.lwjgl.glfw.GLFW;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 
 /**
@@ -31,6 +32,11 @@ public class DisplaySelect extends DisplayableWindow
   private int fade;
   private boolean fadeIn;
   private float[] hoverPhase;
+
+  public DisplaySelect(Level... levels)
+  {
+    this(new ArrayList<Level>(Arrays.asList(levels)));
+  }
 
   public DisplaySelect(ArrayList<Level> levels)
   {
@@ -115,13 +121,14 @@ public class DisplaySelect extends DisplayableWindow
     for (int i = 0; i < numLevels; i++)
     {
       if (overButton==i)
-        hoverPhase[overButton]=Math.min(1,hoverPhase[overButton]+1f/30);
+        hoverPhase[i]=Math.min(1,hoverPhase[i]+1f/30);
       else
-        hoverPhase[overButton]=Math.max(0,hoverPhase[overButton]-1f/30);
+        hoverPhase[i]=Math.max(0,hoverPhase[i]-1f/30);
 
       // Button outline. depth = .5; Changes when clicked. Cuz that will look cool.
       if (clicked != i)
-        Display.setColor3(new Color(191*(1-hoverPhase[i])+97*(hoverPhase[i]), 191*(1-hoverPhase[i])+210*(hoverPhase[i]), 191*(1-hoverPhase[i])+97*(hoverPhase[i])));
+        //System.out.println("Attempting: new Color(" + (191 * (1 - hoverPhase[i]) + 97 * (hoverPhase[i])) + ", " + (191 * (1 - hoverPhase[i]) + 210 * (hoverPhase[i])) + ", " + (191 * (1 - hoverPhase[i]) + 97 * (hoverPhase[i])) + ")");
+        Display.setColor3(new Color((int) (191 * (1 - hoverPhase[i]) + 97 * (hoverPhase[i])), (int) (191 * (1 - hoverPhase[i]) + 210 * (hoverPhase[i])), (int) (191 * (1 - hoverPhase[i]) + 97 * (hoverPhase[i]))));
       else
         Display.setColor3(new Color(127, 127, 255));
       Display.drawRectangleOr(displayLocations_WindowCenterX, displayLocations_WindowCenterY + displayLocations_ButtonBufferedSizeY * i - displayLocations_ButtonBuffer * numLevels, displayLocations_ButtonWidth, displayLocations_ButtonHeight, false, .5);
@@ -134,7 +141,7 @@ public class DisplaySelect extends DisplayableWindow
       buttonDisplay(i, levels.get(i));
     }
 
-    //Draw fade. depth = .95;
+    //TODO Draw fade. depth = .95;
   }
   private void buttonDisplay(int numFromBottom, Level level)
   {
@@ -151,7 +158,7 @@ public class DisplaySelect extends DisplayableWindow
         break;
       //default:
     }
-    Display.drawRectangleOr(displayLocations_WindowCenterX,displayLocations_WindowCenterY+displayLocations_ButtonBufferedSizeY*numFromBottom-displayLocations_ButtonBuffer*levels.size(),displayLocations_ButtonWidth,displayLocations_ButtonHeight,true, 0);
+    Display.drawRectangleOr(displayLocations_WindowCenterX,displayLocations_WindowCenterY+displayLocations_ButtonBufferedSizeY*numFromBottom-displayLocations_ButtonBuffer*levels.size(),(displayLocations_ButtonWidth)/2,(displayLocations_ButtonHeight)/2,true, 0);
   }
 
   private int getOverButton(Point location)
@@ -160,9 +167,9 @@ public class DisplaySelect extends DisplayableWindow
     int y = (int)location.getY();
     if (x>=displayLocations_ButtonSideLeft && x<=displayLocations_ButtonSideRight)
     {
-      y= (displayLocations_WindowCenterY+displayLocations_ButtonBuffer*levels.size()+displayLocations_ButtonHeight/2) - y;
-      if (y%displayLocations_ButtonBufferedSizeY<displayLocations_ButtonHeight)
-        return y/displayLocations_ButtonBufferedSizeY;
+      y = (displayLocations_WindowCenterY + displayLocations_ButtonBuffer * levels.size()/2 - displayLocations_ButtonHeight / 2) - y;
+      if (y>0 && y % displayLocations_ButtonBufferedSizeY < displayLocations_ButtonHeight)
+        return y / displayLocations_ButtonBufferedSizeY;
     }
     return -1;
   }

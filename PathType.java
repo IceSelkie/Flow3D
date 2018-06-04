@@ -8,5 +8,5 @@
  */
 public enum PathType
 {
-    EMPTY, START, PATH
+    START, PATH
 }

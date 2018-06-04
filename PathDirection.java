@@ -27,4 +27,46 @@ public enum PathDirection
         return change.getX()>0?RIGHT:LEFT;
         return null; // TODO UNFINISHED
     }
+
+    public Point3I move(Point3I pointToMove)
+    {
+      switch (this)
+      {
+        case UP:
+          return pointToMove.add(0, -1, 0);
+        case DOWN:
+          return pointToMove.add(0, 1, 0);
+        case LEFT:
+          return pointToMove.add(-1, 0, 0);
+        case RIGHT:
+          return pointToMove.add(1, 0, 0);
+        case IN:
+          return pointToMove.add(0, 0, 1);
+        case OUT:
+          return pointToMove.add(0, 0, -1);
+        default:
+          return pointToMove;
+      }
+    }
+
+    public PathDirection reverse()
+    {
+      switch (this)
+      {
+        case UP:
+          return DOWN;
+        case DOWN:
+          return UP;
+        case LEFT:
+          return RIGHT;
+        case RIGHT:
+          return LEFT;
+        case IN:
+          return OUT;
+        case OUT:
+          return IN;
+        default:
+          return null;
+      }
+    }
 }

@@ -93,8 +93,7 @@ public class DisplayLevel extends DisplayableWindow
       if (path!=null)
       {
         LinkedList<Point3I> flow = lvl.getFlow(path.getColor());
-
-        if (flow.contains(cell))
+        if (flow != null && flow.contains(cell) && path.getType()!=PathType.START)
         {
           dragPath = flow;
           doDrag(location);
@@ -145,8 +144,11 @@ public class DisplayLevel extends DisplayableWindow
    */
   public void doRelease(int clickType, Point location)
   {
-    makeDragPermanent();
-    dragPath = null;
+    if (dragPath!=null)
+    {
+      makeDragPermanent();
+      dragPath = null;
+    }
   }
 
   /**
@@ -255,9 +257,43 @@ public class DisplayLevel extends DisplayableWindow
     lvl.reset(clr);
     for (int i = 1; i<dragPath.size(); i++)
     {
-      // lvl.setPath(dragPath.get(i-1),dragPath.get(i))
-      lvl.setPath(clr,dragPath.get(i));
-      lvl.get(dragPath.get(i-1)).setDirection(PathDirection.get(dragPath.get(i-1),dragPath.get(i)));
+      Point3I dragPathi = dragPath.get(i);
+      Point3I dragPathiPrev = dragPath.get(i - 1);
+      // Remove any paths that this path crosses paths with.
+      Path pathToReplace = lvl.get(dragPathi);
+      if (pathToReplace != null)
+      {
+        Path previousCutOff = lvl.get(lvl.getPreviousInFlow(dragPathi));
+        if (previousCutOff!=null)
+          previousCutOff.setDirection(null);
+
+        LinkedList<Point3I> flow = lvl.getFlow(pathToReplace.getColor());
+        if (flow != null && flow.contains(dragPathi))
+        {
+          while (!flow.getFirst().equals(dragPathi))
+            flow.removeFirst();
+
+          for (Point3I pt : flow)
+            if (lvl.isDrawable(pt))
+              lvl.setPath((Path) null, pt);
+        }
+      }
+
+      if (lvl.isDrawable(dragPathi))
+      {
+        // lvl.setPath(dragPath.get(i-1),dragPath.get(i))
+        lvl.setPath(clr, dragPathi);
+        lvl.get(dragPathiPrev).setDirection(PathDirection.get(dragPathiPrev, dragPathi));
+      }
+      else
+      {
+        if (lvl.get(dragPathi).getColor() == clr)
+        {
+          lvl.get(dragPathiPrev).setDirection(PathDirection.get(dragPathiPrev, dragPathi));
+          lvl.get(dragPathi).setDirection(null);
+        }
+        i = dragPath.size();
+      }
     }
 
   }
@@ -312,57 +348,59 @@ public class DisplayLevel extends DisplayableWindow
     } catch (NullPointerException e)
     {
       e.printStackTrace();
-      Display.setColor3(new Color( 191, 191, 191));
+      Display.setColor3(new Color(191, 191, 191));
     }
 
+    xPos+=width/2D;
+    yPos+=width/2D;
     if (path.getType() == PathType.START)
-      Display.doCircle(xPos + width / 2D, yPos + width / 2D, width / 3D, true, depth);
+      Display.doCircle(xPos, yPos, width / 3D, true, depth);
     if (path.getType() == PathType.PATH)
-      Display.doCircle(xPos + width / 2D, yPos + width / 2D, width / 4D, false, depth);
+      Display.doCircle(xPos , yPos, width / 4D, true, depth);
 
     PathDirection nextDirection = path.getDirection();
-    if (nextDirection!=null)
-    switch (nextDirection)
-    {
-      case IN:
-        //vee; TODO: IF THE CONNECTION IS TO HERE, THIS WILL NOT BE DRAWN. ONLY IF FROM HERE TO THERE.
-        break;
-      case OUT:
-        //caret; TODO: IF THE CONNECTION IS TO HERE, THIS WILL NOT BE DRAWN. ONLY IF FROM HERE TO THERE.
-        break;
-      case UP:
-        glBegin(GL_POLYGON);
-        Display.doPointOr(xPos - width / 4D, yPos - width, depth);
-        Display.doPointOr(xPos - width / 4D, yPos, depth);
-        Display.doPointOr(xPos + width / 4D, yPos, depth);
-        Display.doPointOr(xPos + width / 4D, yPos - width, depth);
-        glEnd();
-        break;
-      case DOWN:
-        glBegin(GL_POLYGON);
-        Display.doPointOr(xPos - width / 4D, yPos, depth);
-        Display.doPointOr(xPos - width / 4D, yPos + width, depth);
-        Display.doPointOr(xPos + width / 4D, yPos + width, depth);
-        Display.doPointOr(xPos + width / 4D, yPos, depth);
-        glEnd();
-        break;
-      case LEFT:
-        glBegin(GL_POLYGON);
-        Display.doPointOr(xPos - width, yPos - width / 4D, depth);
-        Display.doPointOr(xPos, yPos - width / 4D, depth);
-        Display.doPointOr(xPos, yPos + width / 4D, depth);
-        Display.doPointOr(xPos - width, yPos + width / 4D, depth);
-        glEnd();
-        break;
-      case RIGHT:
-        glBegin(GL_POLYGON);
-        Display.doPointOr(xPos, yPos - width / 4D, depth);
-        Display.doPointOr(xPos + width, yPos - width / 4D, depth);
-        Display.doPointOr(xPos + width, yPos + width / 4D, depth);
-        Display.doPointOr(xPos, yPos + width / 4D, depth);
-        glEnd();
-        break;
-      default:
-    }
+    if (nextDirection != null)
+      switch (nextDirection)
+      {
+        case IN:
+          //vee; TODO: IF THE CONNECTION IS TO HERE, THIS WILL NOT BE DRAWN. ONLY IF FROM HERE TO THERE.
+          break;
+        case OUT:
+          //caret; TODO: IF THE CONNECTION IS TO HERE, THIS WILL NOT BE DRAWN. ONLY IF FROM HERE TO THERE.
+          break;
+        case UP:
+          glBegin(GL_POLYGON);
+          Display.doPointOr(xPos - width / 4D, yPos - width, depth);
+          Display.doPointOr(xPos - width / 4D, yPos, depth);
+          Display.doPointOr(xPos + width / 4D, yPos, depth);
+          Display.doPointOr(xPos + width / 4D, yPos - width, depth);
+          glEnd();
+          break;
+        case DOWN:
+          glBegin(GL_POLYGON);
+          Display.doPointOr(xPos - width / 4D, yPos, depth);
+          Display.doPointOr(xPos - width / 4D, yPos + width, depth);
+          Display.doPointOr(xPos + width / 4D, yPos + width, depth);
+          Display.doPointOr(xPos + width / 4D, yPos, depth);
+          glEnd();
+          break;
+        case LEFT:
+          glBegin(GL_POLYGON);
+          Display.doPointOr(xPos - width, yPos - width / 4D, depth);
+          Display.doPointOr(xPos, yPos - width / 4D, depth);
+          Display.doPointOr(xPos, yPos + width / 4D, depth);
+          Display.doPointOr(xPos - width, yPos + width / 4D, depth);
+          glEnd();
+          break;
+        case RIGHT:
+          glBegin(GL_POLYGON);
+          Display.doPointOr(xPos, yPos - width / 4D, depth);
+          Display.doPointOr(xPos + width, yPos - width / 4D, depth);
+          Display.doPointOr(xPos + width, yPos + width / 4D, depth);
+          Display.doPointOr(xPos, yPos + width / 4D, depth);
+          glEnd();
+          break;
+        default:
+      }
   }
 }
