@@ -84,6 +84,39 @@ public class Level
     }
     
     /**
+     * Gets the Path at the specified x,y,z coordinates.
+     * @param x is the x coordinate
+     * @param y is the y coordinate
+     * @param z is the z coordinate
+     */
+    public Path getPath(int x, int y, int z)
+    {
+        Path path = null;
+        Point3I p = new Point3I(x,y,z);
+        if(checkLegalPos(p))
+        {
+            path = c.getPath(p);
+        } 
+        return path;
+    }
+    
+    /**
+     * Checks if a specified point is drawable, bascially if it's not a START path.
+     * @param p is the point to be checked.
+     * @return ret is the boolean result of the test.
+     */
+    public boolean isDrawable(Point3I p)
+    {
+        Path path = c.getPath(p);
+        boolean ret = false;
+        if(path.getType() != PathType.START)
+        {
+            ret = true;
+        }
+        return ret;
+    }
+    
+    /**
      * Checks if a position passed as an arguement is legal by checking if the 
      * point passed is inside the level.
      * @param p is the point that we want to check the legality of.
@@ -103,7 +136,7 @@ public class Level
     /**
      * Sets a path in the level.
      * @param p is the location at which to set the path.
-     * @param Color at which to set the path to. 
+     * @param color at which to set the path to. 
      */
     public void setPath(Point3I p, PathColor color, PathDirection d)
     {
@@ -111,11 +144,20 @@ public class Level
     }
     
     /**
+     * Deletes a path at a specifed point.
+     * @param p is the point to be deleted.
+     */
+    public void deletePath(Point3I p)
+    {
+        c.setPath(null, p.getX(), p.getY(), p.getZ());
+    }
+    
+    /**
      * Gets the flow path that the drawing travels in the level.
      * @param color is the color who's path should be returned.
      * @return flow is the LinkedList of Point3Is that make up the flow path.
      */
-    public LinkedList getFlowPath(PathColor color)
+    public LinkedList<Point3I> getFlowPath(PathColor color)
     {
         LinkedList<Point3I> flow = new LinkedList<Point3I>();
         Point3I start = null, h = null;
@@ -144,42 +186,7 @@ public class Level
         {
             flow.add(start);
             h = start;
-            if(cur == PathDirection.UP)
-            {
-                start = new Point3I(h.getX(),h.getY()-1,h.getZ());
-            }
-            else
-            {
-                if(cur == PathDirection.DOWN)
-                {
-                    start = new Point3I(h.getX(),h.getY()+1,h.getZ());
-                }
-                else
-                {
-                    if(cur == PathDirection.LEFT)
-                    {
-                        start = new Point3I(h.getX()-1,h.getY(),h.getZ());
-                    }
-                    else
-                    {
-                        if(cur == PathDirection.RIGHT)
-                        {
-                            start = new Point3I(h.getX()+1,h.getY(),h.getZ());
-                        }
-                        else
-                        {
-                            if(cur == PathDirection.IN)
-                            {
-                                start = new Point3I(h.getX(),h.getY(),h.getZ()-1);
-                            }
-                            else
-                            {
-                                start = new Point3I(h.getX(),h.getY(),h.getZ()+1);
-                            }
-                        }
-                    }
-                }
-            }           
+            start = cur.move(h);
             prev = cur;
             if(c.getPath(start) == null)
             {
@@ -191,6 +198,21 @@ public class Level
             }
         }      
         return flow;
+    }
+    
+    /**
+     * Gets the point before the specified point in the flow. 
+     * @param p is the point that we want the previous point of.
+     * @return returns the previous point.
+     */
+    public Point3I getPreviousInFlow(Point3I p)
+    {
+        LinkedList<Point3I> flow = getFlowPath(c.getPath(p).getColor());
+        if(flow.getFirst().equals(p))
+        {
+            return null;
+        }
+        return flow.get(flow.indexOf(p)-1);
     }
     
     /**
@@ -259,81 +281,3 @@ public class Level
         }
     }
 }
-    /*
-    
-    public boolean select(Point3I p)
-    {
-        if(checkLegalPos(p) && c.getPath(p) != null && //checks if the point is a valid start location
-           c.getPath(p).getType() == PathType.START)
-        {
-            select = true;
-            start.setLocation(p);
-            cur.setLocation(p);
-        }
-        else
-        {
-            select = false;
-        }
-        
-        return select;
-    }
-    
-    public boolean checkConnected()
-    {
-        boolean ret = false;
-        
-        if(cur.equals(end))
-        {
-            ret = true;
-        }
-        
-        return ret;
-    }
-    
-    
-    public int[] findEnd(PathColor color)
-    {
-        for(int z = 0; z < c.size(); z++)
-        {
-            for(int y = 0; y < c.size(); y++)
-            {
-                for(int x = 0; x < c.size(); x++)
-                {
-                    if(c.getPath(new Point3I(x,y,z)).getColor() == color && z != start.getZ()
-                       && y != start.getY() && x != start.getX())
-                    {
-                        end = new Point3I(x,y,z);
-                    }
-                }
-            }
-        }
-        int[] ret = {end.getZ(),end.getY(),end.getZ()};
-        return ret;
-    }
-    
-    
-    public void draw(Point3I p)
-    {
-        if(checkLegalPos(p) && c.getPath(p) == null)
-        {
-            if((p.getX() == cur.getX() + 1 && p.getY() == cur.getY() && p.getZ() == cur.getZ()) || (p.getX() == cur.getX() - 1 && p.getY() == cur.getY() && p.getZ() == cur.getZ())
-               || (p.getX() == cur.getX() && p.getY() == cur.getY() - 1 && p.getZ() == cur.getZ()) || (p.getX() == cur.getX() && p.getY() == cur.getY() + 1 && p.getX() == cur.getZ())
-               || (p.getX() == cur.getX() && p.getY() == cur.getY() && p.getZ() == cur.getZ() - 1) || (p.getX() == cur.getX() && p.getY() == cur.getY() && p.getZ() == cur.getZ() + 1))
-            {
-                c.setPath(new Path(PathType.PATH, c.getPath(p).getColor()), p.getZ(), p.getY(), p.getX());
-                cur.setLocation(p);
-            }
-        }
-    }
-    
-    
-   
-    public Path getSelectedPath()
-    {
-        return c.getPath(start);
-    }
-    */
-   
-    
-    
-
