@@ -239,18 +239,19 @@ public class Level
      */
     public void reset(PathColor color)
     {
+        Path p = null;
         for(int z = 0; z < c.size(); z++)
         {
             for(int y = 0; y < c.size(); y++)
             {
                 for(int x = 0; x < c.size(); x++)
                 {
-                    if(c.getPath(new Point3I(x,y,z)) != null)
+                    p = c.getPath(new Point3I(x,y,z));
+                    if(p != null)
                     {
-                        if(c.getPath(new Point3I(x,y,z)).getType() == PathType.PATH &&
-                           c.getPath(new Point3I(x,y,z)).getColor() == color)
+                        if(p.getType() == PathType.PATH && p.getColor() == color)
                         {
-                            c.setPath(null,z,y,x);
+                            c.setPath(null,x,y,z);//change back if it doesn't work
                         }
                     }
                 }
