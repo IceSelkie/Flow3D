@@ -89,10 +89,10 @@ public class DisplayLevel extends DisplayableWindow
     Point3I cell = getSquare(location);
     if (cell!=null)
     {
-      Path path = lvl.get(cell);
+      Path path = lvl.getPath(cell);
       if (path!=null)
       {
-        LinkedList<Point3I> flow = lvl.getFlow(path.getColor());
+        LinkedList<Point3I> flow = lvl.getFlowPath(path.getColor());
         if (flow != null && flow.contains(cell) && path.getType()!=PathType.START)
         {
           dragPath = flow;
@@ -253,21 +253,21 @@ public class DisplayLevel extends DisplayableWindow
 
   private void makeDragPermanent()
   {
-    PathColor clr = lvl.get(dragPath.getFirst()).getColor();
+    PathColor clr = lvl.getPath(dragPath.getFirst()).getColor();
     lvl.reset(clr);
     for (int i = 1; i<dragPath.size(); i++)
     {
       Point3I dragPathi = dragPath.get(i);
       Point3I dragPathiPrev = dragPath.get(i - 1);
       // Remove any paths that this path crosses paths with.
-      Path pathToReplace = lvl.get(dragPathi);
+      Path pathToReplace = lvl.getPath(dragPathi);
       if (pathToReplace != null)
       {
-        Path previousCutOff = lvl.get(lvl.getPreviousInFlow(dragPathi));
+        Path previousCutOff = lvl.getPath(lvl.getPreviousInFlow(dragPathi));
         if (previousCutOff!=null)
           previousCutOff.setDirection(null);
 
-        LinkedList<Point3I> flow = lvl.getFlow(pathToReplace.getColor());
+        LinkedList<Point3I> flow = lvl.getFlowPath(pathToReplace.getColor());
         if (flow != null && flow.contains(dragPathi))
         {
           while (!flow.getFirst().equals(dragPathi))
@@ -275,22 +275,21 @@ public class DisplayLevel extends DisplayableWindow
 
           for (Point3I pt : flow)
             if (lvl.isDrawable(pt))
-              lvl.setPath((Path) null, pt);
+              lvl.deletePath(pt);
         }
       }
 
       if (lvl.isDrawable(dragPathi))
       {
-        // lvl.setPath(dragPath.get(i-1),dragPath.get(i))
-        lvl.setPath(clr, dragPathi);
-        lvl.get(dragPathiPrev).setDirection(PathDirection.get(dragPathiPrev, dragPathi));
+        lvl.setPath(dragPathi, clr, null);
+        lvl.getPath(dragPathiPrev).setDirection(PathDirection.get(dragPathiPrev, dragPathi));
       }
       else
       {
-        if (lvl.get(dragPathi).getColor() == clr)
+        if (lvl.getPath(dragPathi).getColor() == clr)
         {
-          lvl.get(dragPathiPrev).setDirection(PathDirection.get(dragPathiPrev, dragPathi));
-          lvl.get(dragPathi).setDirection(null);
+          lvl.getPath(dragPathiPrev).setDirection(PathDirection.get(dragPathiPrev, dragPathi));
+          lvl.getPath(dragPathi).setDirection(null);
         }
         i = dragPath.size();
       }
@@ -305,7 +304,7 @@ public class DisplayLevel extends DisplayableWindow
     yPos -= width / 2D;
     for (int x = 0; x < lvl.size(); x++)
       for (int y = 0; y < lvl.size(); y++)
-        drawPath(lvl.get(x, y, layer), xPos + x * width / lvl.size(), yPos + y * width / lvl.size(), width / lvl.size(), depth);
+        drawPath(lvl.getPath(x, y, layer), xPos + x * width / lvl.size(), yPos + y * width / lvl.size(), width / lvl.size(), depth);
   }
 
   private void drawGrid(double xPos, double yPos, double width, double depth)
@@ -402,5 +401,6 @@ public class DisplayLevel extends DisplayableWindow
           break;
         default:
       }
+      // TODO: Draw a dot instead of a caret or vee in the same places for non-conected paths there.
   }
 }
