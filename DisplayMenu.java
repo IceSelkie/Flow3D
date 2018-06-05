@@ -21,11 +21,11 @@ public class DisplayMenu extends DisplayableWindow
     protected static final int displayLocations_WindowCenterY = displayLocations_WindowHeight / 2;
     protected static final int displayLocations_ButtonWidth = 200;
     protected static final int displayLocations_ButtonHeight = 50;
-    protected static final int displayLocations_ButtonBuffer = 50;
-    protected static final int displayLocations_ButtonBufferedSizeY = displayLocations_ButtonHeight + displayLocations_ButtonBuffer;
-    protected static final int displayLocations_ButtonSideLeft = displayLocations_WindowCenterX - (displayLocations_ButtonWidth/2);
-    protected static final int displayLocations_ButtonSideRight = displayLocations_WindowCenterX + (displayLocations_ButtonWidth/2);
-
+    protected static final int displayLocations_ButtonSideLeft = displayLocations_WindowCenterX - (displayLocations_ButtonWidth / 2);
+    protected static final int displayLocations_ButtonSideRight = displayLocations_WindowCenterX + (displayLocations_ButtonWidth / 2);
+    protected static final int displayLocations_ButtonSideBottom = displayLocations_WindowCenterY - (displayLocations_ButtonHeight / 2);
+    protected static final int displayLocations_ButtonSideTop = displayLocations_WindowCenterX + (displayLocations_ButtonHeight / 2);
+    
     private Point firstLocation; //location of initial mouse click
     private int click; //clicktype of initial mouse click
     private int clicked = -1; // Clicked window
@@ -40,11 +40,11 @@ public class DisplayMenu extends DisplayableWindow
     /**
      * Display the menu screen
      * 
-     * @param window window address
+     * @param window The GLFWwindow pointer that holds the window's data. Needed to do any displaying.
      */
     public void display(long window)
     {
-
+        
     }
 
     /**
@@ -76,9 +76,8 @@ public class DisplayMenu extends DisplayableWindow
         int y = (int)location.getY();
         if (x >= displayLocations_ButtonSideLeft && x <= displayLocations_ButtonSideRight)
         {
-//            y = (displayLocations_WindowCenterY + displayLocations_ButtonBuffer * levels.size() / 2 - displayLocations_ButtonHeight / 2) - y;
-            if (y > 0 && y % displayLocations_ButtonBufferedSizeY < displayLocations_ButtonHeight)
-                return y / displayLocations_ButtonBufferedSizeY;
+            if (y >= displayLocations_ButtonSideBottom && y <= displayLocations_ButtonSideTop)
+                return 1;
         }
         return -1;
     }
@@ -101,8 +100,7 @@ public class DisplayMenu extends DisplayableWindow
      */
     public void doRelease(int clickType, Point location)
     {
-        if(location.equals(firstLocation) && clickType == click)
-        {}
+        //not used
     }
 
     /**

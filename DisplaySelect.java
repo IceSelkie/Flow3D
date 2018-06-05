@@ -9,7 +9,7 @@ import java.util.Arrays;
  * <p>
  * The window data and layout for the window of the menu to select the different layers to play.
  *
- * @author Kevin C.
+ * @author Kaushik A. & Kevin C.  
  * @version 0.0 (Not Started)
  */
 public class DisplaySelect extends DisplayableWindow
