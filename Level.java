@@ -34,7 +34,7 @@ public class Level
     public void medium()
     {
         c = new Cube(3);
-        c.setPath(new Path(PathType.START, PathColor.GREEN, PathDirection.RIGHT), 0, 0, 0);
+        c.setPath(new Path(PathType.START, PathColor.GREEN), 0, 0, 0);
         c.setPath(new Path(PathType.START, PathColor.BLUE), 1, 0, 1);
         c.setPath(new Path(PathType.START, PathColor.ORANGE), 1, 2, 2);
         c.setPath(new Path(PathType.START, PathColor.ORANGE), 2, 0, 1);
@@ -111,11 +111,14 @@ public class Level
      */
     public boolean isDrawable(Point3I p)
     {
-        Path path = c.getPath(p);
         boolean ret = false;
-        if (path.getType() != PathType.START)
+        if(checkLegalPos(p))
         {
-            ret = true;
+            Path path = c.getPath(p);        
+            if (path != null && path.getType() != PathType.START)
+            {
+                ret = true;
+            }
         }
         return ret;
     }
@@ -187,23 +190,27 @@ public class Level
                 }
             }
         }
-        Path p = c.getPath(start);
-        PathDirection cur = p.getDirection();
-        PathDirection prev = cur;
-        while (cur != null)
+        
+        if(start != null)
         {
-            flow.add(start);
-            h = start;
-            start = cur.move(h);
-            prev = cur;
-            if (c.getPath(start) == null)
+            Path p = c.getPath(start);
+            PathDirection cur = p.getDirection();
+            PathDirection prev = cur;
+            while (cur != null)
             {
-                cur = null;
-            }
-            else
-            {
-                cur = c.getPath(start).getDirection();
-            }
+                flow.add(start);
+                h = start;
+                start = cur.move(h);
+                prev = cur;
+                if (c.getPath(start) == null)
+                {
+                    cur = null;
+                }
+                else
+                {
+                    cur = c.getPath(start).getDirection();
+                }
+            }                
         }
         return flow;
     }

@@ -17,7 +17,13 @@ public class Driver
      */
     public static void main(String[] args)
     {
-        new Display(new DisplayMenu()).run();
+        Level e = new Level();
+        e.easy();
+        Level m = new Level();
+        m.medium();
+        Level h = new Level();
+        h.hard();
+        new Display(new DisplaySelect(e,m,h)).run();
         //Test t = new Test();
     }
 }
