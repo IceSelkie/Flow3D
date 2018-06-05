@@ -179,10 +179,11 @@ public class Level
             {
                 for (int x = 0; x < c.size(); x++)
                 {
-                    if (c.getPath(new Point3I(x, y, z)) != null)
+                    Point3I p = new Point3I(x, y, z);
+                    if (c.getPath(p) != null)
                     {
-                        if (c.getPath(new Point3I(x, y, z)).getDirection() != null &&
-                              c.getPath(new Point3I(x, y, z)).getType() == PathType.START)
+                        if (c.getPath(p).getDirection() != null &&
+                              c.getPath(p).getType() == PathType.START)
                         {
                             start = new Point3I(x, y, z);
                         }
@@ -195,13 +196,13 @@ public class Level
         {
             Path p = c.getPath(start);
             PathDirection cur = p.getDirection();
-            PathDirection prev = cur;
+            //PathDirection prev = cur;
             while (cur != null)
             {
                 flow.add(start);
                 h = start;
                 start = cur.move(h);
-                prev = cur;
+                //prev = cur;
                 if (c.getPath(start) == null)
                 {
                     cur = null;
@@ -210,9 +211,13 @@ public class Level
                 {
                     cur = c.getPath(start).getDirection();
                 }
-            }                
+            } 
+            return flow;
         }
-        return flow;
+        else
+        {
+            return null;
+        }
     }
 
     /**
