@@ -115,7 +115,7 @@ public class Level
         if(checkLegalPos(p))
         {
             Path path = c.getPath(p);        
-            if (path != null && path.getType() != PathType.START)
+            if (path == null || path.getType() != PathType.START)
             {
                 ret = true;
             }
