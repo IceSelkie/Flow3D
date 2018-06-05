@@ -29,12 +29,16 @@ public class DisplayMenu extends DisplayableWindow
     private Point firstLocation; //location of initial mouse click
     private int click; //clicktype of initial mouse click
     private int clicked = -1; // Clicked window
+    private int fade;
+    private boolean fadeIn;
 
     /**
      * Constructor for Displaymenu
      */
     public DisplayMenu()
     {
+        fade = 60;
+        fadeIn = true;
     }
 
     /**
@@ -44,7 +48,16 @@ public class DisplayMenu extends DisplayableWindow
      */
     public void display(long window)
     {
-        
+        int overButton = getOverButton(Display.getCursorLocationOrigin(Display.w));
+        if (fadeIn && fade>0)
+            fade--;
+        if (fade==60)                  //        /--------------------
+            Display.setDisplay(new DisplaySelect());//what is the parameter for the new DisplaySelect 
+        if (clicked!=-1 && !fadeIn)
+            fade++;
+            
+        //need to put in the button display
+            
     }
 
     /**

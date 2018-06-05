@@ -115,6 +115,7 @@ public class DisplaySelect extends DisplayableWindow
             Display.setDisplay(new DisplayLevel(levels.get(clicked)));
         if (clicked!=-1 && !fadeIn)
             fade++;
+            
 
         int numLevels = levels.size();
         for (int i = 0; i < numLevels; i++)
