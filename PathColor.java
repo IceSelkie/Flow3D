@@ -12,6 +12,8 @@ public enum PathColor
 {
     RED, GREEN, BLUE, YELLOW, ORANGE, MAGENTA, AQUA;
 
+    public static final int COUNT = 7;
+
     /**
      * Gets the color of the enumerated value.
      *
@@ -37,6 +39,29 @@ public enum PathColor
                 return new Color(0,221,221,255);
             default:
                 return null;
+        }
+    }
+
+    public static PathColor get(int i)
+    {
+        switch (Math.abs(i)%COUNT)
+        {
+            case 0:
+                return RED;
+            case 1:
+                return GREEN;
+            case 2:
+                return BLUE;
+            case 3:
+                return YELLOW;
+            case 4:
+                return ORANGE;
+            case 5:
+                return MAGENTA;
+            case 6:
+                return AQUA;
+            default:
+                throw new IndexOutOfBoundsException("(positive number) % "+COUNT+" isn't between 0 and "+COUNT+".");
         }
     }
 }
