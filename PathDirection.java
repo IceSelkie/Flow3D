@@ -9,9 +9,9 @@ public enum PathDirection
 {
     UP, DOWN, LEFT, RIGHT, IN, OUT;
 
-    /**
-     *
-     */
+  public static final PathDirection[] DIRECTIONS = new PathDirection[]{PathDirection.LEFT, PathDirection.RIGHT, PathDirection.UP, PathDirection.DOWN, PathDirection.OUT, PathDirection.IN};
+
+
     public static PathDirection get(Point3I from, Point3I to)
     {
         Point3I change = to.add(-from.getX(),-from.getY(),-from.getZ());
