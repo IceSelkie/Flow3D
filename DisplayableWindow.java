@@ -8,7 +8,7 @@ import java.awt.Point;
  * Interface for the window data and layout for a window, to display each window.
  *
  * @author Stanley S. & Kaushik A.
- * @version 0.1 (WIP)
+ * @version 1.1
  */
 public abstract class DisplayableWindow
 {
@@ -34,7 +34,7 @@ public abstract class DisplayableWindow
      *
      * @param location The point on the screen where the mouse was moved to.
      */
-    public abstract void doDrag(Point location);
+    public void doDrag(Point location) {}
 
     /**
      * When the user clicks, then lets go, this will be
@@ -54,7 +54,7 @@ public abstract class DisplayableWindow
      * @param directionIsUp This will be {@code true}, if the scroll is upward.
      * @param location The point on the screen where the mouse is, when it is scrolled.
      */
-    public abstract void doScroll(boolean directionIsUp, Point location);
+    public void doScroll(boolean directionIsUp, Point location) {}
 
     /**
      * Abstract method to be implemented by subclasses to do the actual rendering of the window.
