@@ -197,11 +197,10 @@ public class Display
         // clear the framebuffer
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        //glEnable(GL_BLEND);
-        //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        //Enables the depth buffer. Can do some weird stuff, like disable transparency.
+        /*glEnable(GL_DEPTH_TEST);*/
 
-        glEnable(GL_DEPTH_TEST);
-        glEnable(GL_BLEND);
+        //glEnable(GL_BLEND);
         glDepthFunc(GL_LESS);
         glShadeModel(GL_SMOOTH);
     }
@@ -270,6 +269,7 @@ public class Display
     }
 
 
+
     // **************** METHODS TO DRAW STUFF **************** //TODO
 
 
@@ -278,6 +278,27 @@ public class Display
   {
     doPointCart(x, y, 0);
   }*/
+
+    /**
+     * After running enableTransparency, transparent objects can be drawn.
+     * <p>
+     * Please use {@link #disableTransparency()} afterwards to disable it.
+     */
+    protected static void enableTransparency()
+    {
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
+
+    /**
+     * After running disableTransparency, transparent objects can no longer be drawn.
+     * <p>
+     * Use {@link #enableTransparency()} again to reenable it.
+     */
+    protected static void disableTransparency()
+    {
+        glDisable(GL_BLEND);
+    }
 
     public static void doPointCart(double x, double y, double depth)
     {
