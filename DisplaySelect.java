@@ -27,9 +27,12 @@ public class DisplaySelect extends DisplayableWindow
     protected static final int displayLocations_ButtonSideRight = displayLocations_WindowCenterX+(displayLocations_ButtonWidth/2);
 
     private ArrayList<Level> levels;
-    private int clicked = -1; // Clicked window
-    private int fade;
+
+    // For fade effects on opening this window.
     private boolean fadeIn;
+    private int fade;
+
+    private int clicked = -1; // Clicked window
     private float[] hoverPhase;
 
     public DisplaySelect(Level... levels)
@@ -131,17 +134,21 @@ public class DisplaySelect extends DisplayableWindow
                 Display.setColor3(new Color((int) (191 * (1 - hoverPhase[i]) + 97 * (hoverPhase[i])), (int) (191 * (1 - hoverPhase[i]) + 210 * (hoverPhase[i])), (int) (191 * (1 - hoverPhase[i]) + 97 * (hoverPhase[i]))));
             else
                 Display.setColor3(new Color(127, 127, 255));
-            Display.drawRectangleOr(displayLocations_WindowCenterX, displayLocations_WindowCenterY + displayLocations_ButtonBufferedSizeY * i - displayLocations_ButtonBuffer * numLevels, displayLocations_ButtonWidth, displayLocations_ButtonHeight, false, .5);
+            Display.drawRectangleOr(displayLocations_WindowCenterX, displayLocations_WindowCenterY + displayLocations_ButtonBufferedSizeY * i - displayLocations_ButtonBuffer * numLevels, displayLocations_ButtonWidth, displayLocations_ButtonHeight, false);
 
             // Button background. depth = -.9;
             Display.setColor3(new Color(0, 0, 95));
-            Display.drawRectangleOr(displayLocations_WindowCenterX, displayLocations_WindowCenterY + displayLocations_ButtonBufferedSizeY * i - displayLocations_ButtonBuffer * numLevels, displayLocations_ButtonWidth, displayLocations_ButtonHeight, true, -.9);
+            Display.drawRectangleOr(displayLocations_WindowCenterX, displayLocations_WindowCenterY + displayLocations_ButtonBufferedSizeY * i - displayLocations_ButtonBuffer * numLevels, displayLocations_ButtonWidth, displayLocations_ButtonHeight, true);
 
             // The contents of the button: ie: text and color, etc.
             buttonDisplay(i, levels.get(i));
         }
 
-        //TODO Draw fade. depth = .95;
+        // Fade in and out
+        Display.enableTransparency();
+        Display.setColor4(0,0,31,(int)(255*(fade/60D)));
+        Display.drawRectangleOr(400,300,800,600,true);
+        Display.disableTransparency();
     }
 
     private void buttonDisplay(int numFromBottom, Level level)
@@ -159,7 +166,7 @@ public class DisplaySelect extends DisplayableWindow
             break;
             //default:
         }
-        Display.drawRectangleOr(displayLocations_WindowCenterX,displayLocations_WindowCenterY+displayLocations_ButtonBufferedSizeY*numFromBottom-displayLocations_ButtonBuffer*levels.size(),(displayLocations_ButtonWidth)/2,(displayLocations_ButtonHeight)/2,true, 0);
+        Display.drawRectangleOr(displayLocations_WindowCenterX,displayLocations_WindowCenterY+displayLocations_ButtonBufferedSizeY*numFromBottom-displayLocations_ButtonBuffer*levels.size(),(displayLocations_ButtonWidth)/2,(displayLocations_ButtonHeight)/2,true);
     }
 
     private int getOverButton(Point location)

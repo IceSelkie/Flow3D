@@ -300,9 +300,9 @@ public class Display
         glDisable(GL_BLEND);
     }
 
-    public static void doPointCart(double x, double y, double depth)
+    public static void doPointCart(double x, double y)
     {
-        glVertex3d(x / (w.getWidth() / 2D), y / (w.getHeight() / 2D), -depth);
+        glVertex3d(x / (w.getWidth() / 2D), y / (w.getHeight() / 2D), 0);
     }
 
   /*public static void doPointOr(double x, double y)
@@ -310,9 +310,9 @@ public class Display
     doPointCart(x - w.getWidth() / 2D, w.getHeight() / 2D - y, 0);
   }*/
 
-    public static void doPointOr(double x, double y, double depth)
+    public static void doPointOr(double x, double y)
     {
-        doPointCart(x - w.getWidth() / 2D, w.getHeight() / 2D - y, depth);
+        doPointCart(x - w.getWidth() / 2D, w.getHeight() / 2D - y);
     }
 
     public static void setColor3(Color c)
@@ -335,25 +335,25 @@ public class Display
         glColor4f(r / 255f, g / 255f, b / 255f, a / 255f);
     }
 
-    public static void drawRectangleOr(int x, int y, int width, int height, boolean fill, double depth)
+    public static void drawRectangleOr(int x, int y, int width, int height, boolean fill)
     {
         glBegin(fill ? GL_POLYGON : GL_LINE_LOOP);
-        doPointOr(x - width / 2, y - height / 2, depth);
-        doPointOr(x + width / 2, y - height / 2, depth);
-        doPointOr(x + width / 2, y + height / 2, depth);
-        doPointOr(x - width / 2, y + height / 2, depth);
+        doPointOr(x - width / 2, y - height / 2);
+        doPointOr(x + width / 2, y - height / 2);
+        doPointOr(x + width / 2, y + height / 2);
+        doPointOr(x - width / 2, y + height / 2);
         glEnd();
     }
 
-    public static void drawLineOr(Point start, Point end, double depth)
+    public static void drawLineOr(Point start, Point end)
     {
         glBegin(GL_LINES);
-        doPointOr(start.x, start.y, depth);
-        doPointOr(end.x, end.y, depth);
+        doPointOr(start.x, start.y);
+        doPointOr(end.x, end.y);
         glEnd();
     }
 
-    public static void doCircle(double xPos, double yPos, double radius, boolean fill, double depth)
+    public static void doCircle(double xPos, double yPos, double radius, boolean fill)
     {
         int num_segments = (int) (7 * radius);
         double theta = 2 * PI / num_segments;
@@ -367,7 +367,7 @@ public class Display
         glBegin(fill ? GL_POLYGON : GL_LINE_LOOP);
         for (int i = 0; i < num_segments; i++)
         {
-            doPointOr(xPos + x, yPos + y, depth);//output vertex
+            doPointOr(xPos + x, yPos + y);//output vertex
 
             //calculate the tangential vector
             //remember, the radial vector is (x, y)

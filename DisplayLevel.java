@@ -20,6 +20,10 @@ public class DisplayLevel extends DisplayableWindow
   int layer; // Which level to display on the main display. The z-axis. 0 being top.
   LinkedList<Point3I> dragPath; // The path of which the user has dragged.
 
+  // For fade effects on opening this window.
+  private boolean fadeIn = true;
+  private int fade = 60;
+
   // The sizes and locations of all the things that are going to be displayed.
   protected static final int displayLocations_WindowWidth = 800;
   protected static final int displayLocations_WindowHeight = 600;
@@ -182,19 +186,35 @@ public class DisplayLevel extends DisplayableWindow
    */
   public void display(long window)
   {
-    Display.setColor3(new Color( 191, 191, 191));
-    Display.drawRectangleOr(displayLocations_LeftBarWidth, displayLocations_WindowCenterY, 2, displayLocations_WindowHeight,true, -.9);
+    if (fadeIn && fade>0)
+      fade--;
+    //if (fade==60)
+    //  Display.setDisplay(new DisplayLevel(levels.get(clicked)));
+    if (!fadeIn)
+      fade++;
 
+    // Line between left and right sections
+    Display.setColor3(new Color( 191, 191, 191));
+    /* -.9 */Display.drawRectangleOr(displayLocations_LeftBarWidth, displayLocations_WindowCenterY, 2, displayLocations_WindowHeight,true);
+
+    // Left bar and layers within
     for (int i = -layer; i < lvl.size() - layer; i++)
     {
-      drawLayerOr(layer + i, displayLocations_LeftBar_LevelsCenterX, displayLocations_LeftBar_LevelsCenterY - displayLocations_LeftBar_LevelsBufferedSize * i, displayLocations_LeftBar_LevelsSize, 1);
       Display.setColor3(new Color(0, 0, 95));
-      Display.drawRectangleOr(displayLocations_LeftBar_LevelsCenterX, displayLocations_LeftBar_LevelsCenterY - displayLocations_LeftBar_LevelsBufferedSize * i, displayLocations_LeftBar_LevelsSize, displayLocations_LeftBar_LevelsSize,true, .5);
+      /* .5 */ Display.drawRectangleOr(displayLocations_LeftBar_LevelsCenterX, displayLocations_LeftBar_LevelsCenterY - displayLocations_LeftBar_LevelsBufferedSize * i, displayLocations_LeftBar_LevelsSize, displayLocations_LeftBar_LevelsSize,true);
+      /* 1 */ drawLayerOr(layer + i, displayLocations_LeftBar_LevelsCenterX, displayLocations_LeftBar_LevelsCenterY - displayLocations_LeftBar_LevelsBufferedSize * i, displayLocations_LeftBar_LevelsSize);
     }
 
-    drawLayerOr(layer, displayLocations_GameCenterX, displayLocations_GameCenterY, displayLocations_GameSize, 1);
+    // Display main window
     Display.setColor3(new Color(0, 0, 95));
-    Display.drawRectangleOr(displayLocations_GameCenterX, displayLocations_GameCenterY, displayLocations_GameSize, displayLocations_GameSize,true, .5);
+    /* .5 */ Display.drawRectangleOr(displayLocations_GameCenterX, displayLocations_GameCenterY, displayLocations_GameSize, displayLocations_GameSize,true);
+    /* 1 */ drawLayerOr(layer, displayLocations_GameCenterX, displayLocations_GameCenterY, displayLocations_GameSize);
+
+    // Fade in
+    Display.enableTransparency();
+    Display.setColor4(0,0,31,(int)(255*(fade/60D)));
+    Display.drawRectangleOr(400,300,800,600,true);
+    Display.disableTransparency();
   }
 
 
@@ -297,17 +317,17 @@ public class DisplayLevel extends DisplayableWindow
 
   }
 
-  private void drawLayerOr(int layer, double xPos, double yPos, double width, double depth)
+  private void drawLayerOr(int layer, double xPos, double yPos, double width)
   {
-    drawGrid(xPos, yPos, width, depth);
+    drawGrid(xPos, yPos, width);
     xPos -= width / 2D;
     yPos -= width / 2D;
     for (int x = 0; x < lvl.size(); x++)
       for (int y = 0; y < lvl.size(); y++)
-        drawPath(lvl.getPath(x, y, layer), xPos + x * width / lvl.size(), yPos + y * width / lvl.size(), width / lvl.size(), depth);
+        drawPath(lvl.getPath(x, y, layer), xPos + x * width / lvl.size(), yPos + y * width / lvl.size(), width / lvl.size());
   }
 
-  private void drawGrid(double xPos, double yPos, double width, double depth)
+  private void drawGrid(double xPos, double yPos, double width)
   {
     int size = lvl.size();
 
@@ -316,27 +336,27 @@ public class DisplayLevel extends DisplayableWindow
 
     Display.setColor3(new Color( 191, 191, 191));
     glBegin(GL_LINE_LOOP);
-    Display.doPointOr(xPos, yPos, depth);
-    Display.doPointOr(xPos + width, yPos, depth);
-    Display.doPointOr(xPos + width, yPos + width, depth);
-    Display.doPointOr(xPos, yPos + width, depth);
+    Display.doPointOr(xPos, yPos);
+    Display.doPointOr(xPos + width, yPos);
+    Display.doPointOr(xPos + width, yPos + width);
+    Display.doPointOr(xPos, yPos + width);
     glEnd();
 
     glBegin(GL_LINES);
     for (int r = 1; r < size; r++)
     {
-      Display.doPointOr(xPos, yPos + r * width / size, depth);
-      Display.doPointOr(xPos + width, yPos + r * width / size, depth);
+      Display.doPointOr(xPos, yPos + r * width / size);
+      Display.doPointOr(xPos + width, yPos + r * width / size);
     }
     for (int c = 1; c < size; c++)
     {
-      Display.doPointOr(xPos + c * width / size, yPos, depth);
-      Display.doPointOr(xPos + c * width / size, yPos + width, depth);
+      Display.doPointOr(xPos + c * width / size, yPos);
+      Display.doPointOr(xPos + c * width / size, yPos + width);
     }
     glEnd();
   }
 
-  private void drawPath(Path path, double xPos, double yPos, double width, double depth)
+  private void drawPath(Path path, double xPos, double yPos, double width)
   {
     if (path == null)
       return;
@@ -353,9 +373,9 @@ public class DisplayLevel extends DisplayableWindow
     xPos+=width/2D;
     yPos+=width/2D;
     if (path.getType() == PathType.START)
-      Display.doCircle(xPos, yPos, width / 3D, true, depth);
+      Display.doCircle(xPos, yPos, width / 3D, true);
     if (path.getType() == PathType.PATH)
-      Display.doCircle(xPos , yPos, width / 4D, true, depth);
+      Display.doCircle(xPos , yPos, width / 4D, true);
 
     PathDirection nextDirection = path.getDirection();
     if (nextDirection != null)
@@ -369,34 +389,34 @@ public class DisplayLevel extends DisplayableWindow
           break;
         case UP:
           glBegin(GL_POLYGON);
-          Display.doPointOr(xPos - width / 4D, yPos - width, depth);
-          Display.doPointOr(xPos - width / 4D, yPos, depth);
-          Display.doPointOr(xPos + width / 4D, yPos, depth);
-          Display.doPointOr(xPos + width / 4D, yPos - width, depth);
+          Display.doPointOr(xPos - width / 4D, yPos - width);
+          Display.doPointOr(xPos - width / 4D, yPos);
+          Display.doPointOr(xPos + width / 4D, yPos);
+          Display.doPointOr(xPos + width / 4D, yPos - width);
           glEnd();
           break;
         case DOWN:
           glBegin(GL_POLYGON);
-          Display.doPointOr(xPos - width / 4D, yPos, depth);
-          Display.doPointOr(xPos - width / 4D, yPos + width, depth);
-          Display.doPointOr(xPos + width / 4D, yPos + width, depth);
-          Display.doPointOr(xPos + width / 4D, yPos, depth);
+          Display.doPointOr(xPos - width / 4D, yPos);
+          Display.doPointOr(xPos - width / 4D, yPos + width);
+          Display.doPointOr(xPos + width / 4D, yPos + width);
+          Display.doPointOr(xPos + width / 4D, yPos);
           glEnd();
           break;
         case LEFT:
           glBegin(GL_POLYGON);
-          Display.doPointOr(xPos - width, yPos - width / 4D, depth);
-          Display.doPointOr(xPos, yPos - width / 4D, depth);
-          Display.doPointOr(xPos, yPos + width / 4D, depth);
-          Display.doPointOr(xPos - width, yPos + width / 4D, depth);
+          Display.doPointOr(xPos - width, yPos - width / 4D);
+          Display.doPointOr(xPos, yPos - width / 4D);
+          Display.doPointOr(xPos, yPos + width / 4D);
+          Display.doPointOr(xPos - width, yPos + width / 4D);
           glEnd();
           break;
         case RIGHT:
           glBegin(GL_POLYGON);
-          Display.doPointOr(xPos, yPos - width / 4D, depth);
-          Display.doPointOr(xPos + width, yPos - width / 4D, depth);
-          Display.doPointOr(xPos + width, yPos + width / 4D, depth);
-          Display.doPointOr(xPos, yPos + width / 4D, depth);
+          Display.doPointOr(xPos, yPos - width / 4D);
+          Display.doPointOr(xPos + width, yPos - width / 4D);
+          Display.doPointOr(xPos + width, yPos + width / 4D);
+          Display.doPointOr(xPos, yPos + width / 4D);
           glEnd();
           break;
         default:
