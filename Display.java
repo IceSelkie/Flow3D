@@ -19,7 +19,6 @@ public class Display
 {
 
     public static final int FPS = 60;
-    public static final double ZDEPTHMODIFIER = 1D / 500; // .002
     // The window handle
     private static long window;
     static WindowSize w;
