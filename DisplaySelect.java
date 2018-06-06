@@ -34,12 +34,25 @@ public class DisplaySelect extends DisplayableWindow
 
     private int clicked = -1; // Clicked window
     private float[] hoverPhase;
-
+   /**
+   * Constructor for DisplaySelect
+   * <p>
+   * Instantiates ArrayList levels containing Level objects. 
+   *
+   * @param levels ArrayList or singular Level Object 
+   */
     public DisplaySelect(Level... levels)
     {
         this(new ArrayList<Level>(Arrays.asList(levels)));
     }
-
+    /**
+     * Constructor for Display Select
+     * <p>
+     * Instantiates levels with parameter levels. Sets int fade to 60. Sets boolean fadeIn to true. float array 
+     * hoverPhase recieves new float array of same size as levels ArrayList.
+     * 
+     * @param levels the recieved ArrayList of Level objects. 
+     */
     public DisplaySelect(ArrayList<Level> levels)
     {
         this.levels = levels;
@@ -69,12 +82,13 @@ public class DisplaySelect extends DisplayableWindow
      * this will be called. Warning: This is asynchronous, and
      * can happen at any time, EVEN WHEN OTHER METHODS ARE
      * INPROGRESS.
+     * Not used within DisplaySelect
      *
      * @param location The point on the screen where the mouse was moved to.
      */
     public void doDrag(Point location)
     {
-
+        //not essential but method signature required because exists in abstract class
     }
 
     /**
@@ -150,7 +164,10 @@ public class DisplaySelect extends DisplayableWindow
         Display.drawRectangleOr(400,300,800,600,true);
         Display.disableTransparency();
     }
-
+    /*Private Method. 
+       Displays buttons (Easy Medium Hard)
+       Called within display method.
+       */
     private void buttonDisplay(int numFromBottom, Level level)
     {
         switch (numFromBottom)
@@ -168,7 +185,10 @@ public class DisplaySelect extends DisplayableWindow
         }
         Display.drawRectangleOr(displayLocations_WindowCenterX,displayLocations_WindowCenterY+displayLocations_ButtonBufferedSizeY*numFromBottom-displayLocations_ButtonBuffer*levels.size(),(displayLocations_ButtonWidth)/2,(displayLocations_ButtonHeight)/2,true);
     }
-
+    /* Private Method.
+     * Determines hitboxes for buttons (Easy Medium Hard)
+     * Called within display method. 
+     */
     private int getOverButton(Point location)
     {
         int x = (int)location.getX();
