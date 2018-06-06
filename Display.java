@@ -12,7 +12,6 @@ import static java.lang.Math.*;
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 public class Display
@@ -71,7 +70,7 @@ public class Display
         registerCallbacks();
 
         // Get the thread stack and push a new frame
-        try (MemoryStack stack = stackPush())
+        try (MemoryStack stack = MemoryStack.stackPush())
         {
             IntBuffer pWidth = stack.mallocInt(1); // int*
             IntBuffer pHeight = stack.mallocInt(1); // int*
@@ -396,7 +395,7 @@ public class Display
 
     public WindowSize getWindowSize()
     {
-        try (MemoryStack stack = stackPush())
+        try (MemoryStack stack = MemoryStack.stackPush())
         {
             //int* width = malloc(1);
             IntBuffer pWidth = stack.mallocInt(1); // int*
@@ -412,7 +411,7 @@ public class Display
 
     public Point2D getCursorLocationCartesian(WindowSize w)
     {
-        try (MemoryStack stack = stackPush())
+        try (MemoryStack stack = MemoryStack.stackPush())
         {
             //double* x = malloc(1);
             DoubleBuffer x = stack.mallocDouble(1); // int*
@@ -428,7 +427,7 @@ public class Display
 
     public static Point getCursorLocationOrigin(WindowSize w)
     {
-        try (MemoryStack stack = stackPush())
+        try (MemoryStack stack = MemoryStack.stackPush())
         {
             //double* x = malloc(1);
             DoubleBuffer x = stack.mallocDouble(1); // int*

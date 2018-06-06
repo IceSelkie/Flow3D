@@ -274,7 +274,7 @@ public class DisplayLevel extends DisplayableWindow
   private void makeDragPermanent()
   {
     PathColor clr = lvl.getPath(dragPath.getFirst()).getColor();
-    lvl.reset(clr);
+    lvl.clearColor(clr);
     for (int i = 1; i<dragPath.size(); i++)
     {
       Point3I dragPathi = dragPath.get(i);
