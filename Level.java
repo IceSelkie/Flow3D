@@ -370,4 +370,39 @@ public class Level
             levelCube.setPath(null, x, y, z);
         }
   }
+  
+  /**
+     * Resets the level to a start level.
+     * 
+     * @param i is the int that represents which level to be reset to: 1 for
+     * easy, 2 for medium, and 3 for hard.
+     */
+    public void resetLvl(int i)
+    {        
+        for (int z = 0; z < levelCube.size(); z++)       
+            for (int y = 0; y < levelCube.size(); y++)           
+                for (int x = 0; x < levelCube.size(); x++)
+                {                    
+                    levelCube.setPath(null, x, y, z);                       
+                }
+                                    
+        if(i == 1)
+        {
+            easy();
+        }
+        else
+        {
+            if(i == 2)
+            {
+                medium();
+            }
+            else
+            {
+                if(i == 3)
+                {
+                    hard();
+                }
+            }
+        }
+    }
 }
