@@ -41,7 +41,7 @@ public enum InterpolationType
    */
   public static double getSinusoid(double val)
   {
-    return -(Math.cos(val * Math.PI) + 1) / 2;
+    return (-Math.cos(val * Math.PI) + 1) / 2;
   }
 
   /**

@@ -43,7 +43,7 @@ public class DisplayTransitionHelper
    */
   public DisplayTransitionHelper(double start, double end, int time, int startTime, InterpolationType interpolation)
   {
-    if (a <= b)
+    if (start <= end)
     {
       a = start;
       b = end;
@@ -67,10 +67,7 @@ public class DisplayTransitionHelper
       location = startTime;
     }
 
-    if (location < a)
-      location = 0;
-    if (location > b)
-      location = time;
+    location = Display.normalizeInt(location, 0, time);
   }
 
   /**
@@ -81,10 +78,7 @@ public class DisplayTransitionHelper
   public void tick()
   {
     location += upward ? 1 : -1;
-    if (location < a)
-      location = 0;
-    if (location > b)
-      location = time;
+    location = Display.normalizeInt(location, 0, time);
   }
 
   /**
@@ -94,11 +88,43 @@ public class DisplayTransitionHelper
    */
   public double get()
   {
-    if (location < 0)
-      return a;
-    if (location > time)
-      return b;
+    location = Display.normalizeInt(location, 0, time);
 
     return a + (b - a) * interpolation.get((double) location / time);
+  }
+
+  public void setIncreasing()
+  {
+    upward = true;
+  }
+
+  public void setDecreasing()
+  {
+    upward = false;
+  }
+
+  public void reverseDirection()
+  {
+    upward = !upward;
+  }
+
+  public boolean isIncreasing()
+  {
+    return upward;
+  }
+
+  public boolean isDecreasing()
+  {
+    return !upward;
+  }
+
+  public int getTime()
+  {
+    return location;
+  }
+
+  public InterpolationType getInterpolation()
+  {
+    return interpolation;
   }
 }
