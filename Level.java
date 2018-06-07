@@ -18,6 +18,11 @@ public class Level
    */
   protected Cube levelCube;
 
+  private Level(int size)
+  {
+    levelCube = new Cube(size);
+  }
+
   /**
    * Constructor for Level
    * <p>
@@ -28,7 +33,7 @@ public class Level
    */
   public Level(int size, Point3I[] startPositionPairs)
   {
-    levelCube = new Cube(size);
+    this(size);
 
     int startPositionCount = startPositionPairs.length;
 
@@ -400,5 +405,12 @@ public class Level
       else
         if (i == 3)
           levelCube = hard().levelCube;
+  }
+
+  public Level clone()
+  {
+    Level clone = new Level(size());
+    clone.levelCube = levelCube.clone();
+    return clone;
   }
 }

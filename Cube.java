@@ -104,4 +104,18 @@ public class Cube
   {
     return size;
   }
+
+  public Cube clone()
+  {
+    Cube clone = new Cube(size);
+    for (int z = 0; z < size; z++)
+      for (int y = 0; y < size; y++)
+        for (int x = 0; x < size; x++)
+        {
+          Path old = get(x, y, z);
+          if (old != null)
+            clone.setPath(new Path(old.getType(), old.getColor(), old.getDirection()), x, y, z);
+        }
+    return clone;
+  }
 }
