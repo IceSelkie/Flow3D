@@ -124,6 +124,8 @@ public class Display
 
         glfwSetScrollCallback(window, (window, xoffset, yoffset) ->
         {
+            currentlyDisplayed.doScroll(yoffset>0, getCursorLocationOrigin(w));
+            /*
             scrollAmount += yoffset;
             while (scrollAmount <= -1)
             {
@@ -134,8 +136,7 @@ public class Display
             {
                 scrollAmount -= 1;
                 currentlyDisplayed.doScroll(true, getCursorLocationOrigin(w));
-            }
-
+            }*/
         });
     }
 
