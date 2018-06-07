@@ -1,7 +1,6 @@
 import org.lwjgl.glfw.GLFW;
 
 import java.awt.*;
-import java.awt.geom.Point2D;
 import java.util.LinkedList;
 
 import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_1;
@@ -12,8 +11,8 @@ import static org.lwjgl.opengl.GL11.*;
  * <p>
  * The window data and layout for the window of the active game, with one level displayed.
  *
- * @author Stanley S. & Kaushik A.
- * @version 0.0 (Not Started)
+ * @author Stanley S.
+ * @version 1.9
  */
 public class DisplayLevel extends DisplayableWindow
 {
@@ -23,8 +22,7 @@ public class DisplayLevel extends DisplayableWindow
   LinkedList<Point3I> dragPath; // The path of which the user has dragged.
 
   // For fade effects on opening this window.
-  private boolean fadeIn = true;
-  private int fade = 60;
+  private DisplayTransitionHelper fade = new DisplayTransitionHelper(0,60,60,-60,InterpolationType.SINUSOID);
 
   // The sizes and locations of all the things that are going to be displayed.
   protected static final int displayLocations_WindowWidth = 800;
@@ -162,7 +160,10 @@ public class DisplayLevel extends DisplayableWindow
     }
 
     if (old.checkWin())
-      fadeIn=false;
+    {
+      if (Driver.DEBUG) System.out.println("U WON. NICE.");
+      fade.setIncreasing();
+    }
   }
 
   /**
@@ -197,12 +198,9 @@ public class DisplayLevel extends DisplayableWindow
    */
   public void display(long window)
   {
-    if (fadeIn && fade>0)
-      fade--;
-    if (fade==60)
+    if (fade.get()==60 && fade.isIncreasing())
       Display.setDisplay(new DisplayMenu());
-    if (!fadeIn)
-      fade++;
+    fade.tick();
 
     // Line between left and right sections
     Display.setColor3(new Color( 191, 191, 191));
@@ -232,7 +230,7 @@ public class DisplayLevel extends DisplayableWindow
 
     // Fade in
     Display.enableTransparency();
-    Display.setColor4(0,0,31,(int)(255*(fade/60D)));
+    Display.setColor4(0,0,31,(int)(255*(fade.get()/60D)));
     Display.drawRectangleOr(400,300,800,600,true);
     Display.disableTransparency();
   }

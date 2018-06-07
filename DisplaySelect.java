@@ -57,7 +57,7 @@ public class DisplaySelect extends DisplayableWindow
   public DisplaySelect(ArrayList<Level> levels)
   {
     this.levels = levels;
-    fade = new DisplayTransitionHelper(0, 60, 60, -60, InterpolationType.SINUSOID);
+    fade = new DisplayTransitionHelper(0, 60, 60, -59, InterpolationType.SINUSOID);
     hoverPhase = new float[levels.size()];
   }
 
@@ -126,9 +126,9 @@ public class DisplaySelect extends DisplayableWindow
   public void display(long window)
   {
     int overButton = getOverButton(Display.getCursorLocationOrigin(Display.w));
-    fade.tick();
     if (fade.get() == 60)
       Display.setDisplay(new DisplayLevel(levels.get(clicked)));
+    fade.tick();
 
 
     int numLevels = levels.size();
