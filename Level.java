@@ -101,18 +101,18 @@ public class Level
   public static Level hard()
   {
     return new Level(4, new Point3I[]{
-        new Point3I(0, 1, 2), // RED
-        new Point3I(1, 1, 2), // RED
+        new Point3I(2, 1, 0), // RED
+        new Point3I(2, 1, 1), // RED
         new Point3I(0, 1, 0), // GREEN
-        new Point3I(1, 3, 0), // GREEN
+        new Point3I(0, 3, 1), // GREEN
         new Point3I(1, 3, 1), // BLUE
-        new Point3I(3, 0, 0), // BLUE
+        new Point3I(0, 0, 3), // BLUE
         new Point3I(2, 1, 1), // YELLOW
-        new Point3I(3, 2, 1), // YELLOW
-        new Point3I(2, 2, 0), // ORANGE
+        new Point3I(1, 2, 3), // YELLOW
+        new Point3I(0, 2, 2), // ORANGE
         new Point3I(3, 3, 3), // ORANGE
         new Point3I(0, 0, 0), // MAGENTA
-        new Point3I(0, 2, 2), // MAGENTA
+        new Point3I(2, 2, 0), // MAGENTA
     });
   }
 
