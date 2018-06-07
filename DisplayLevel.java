@@ -1,6 +1,7 @@
 import org.lwjgl.glfw.GLFW;
 
 import java.awt.*;
+import java.awt.geom.Point2D;
 import java.util.LinkedList;
 
 import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_1;
@@ -176,8 +177,13 @@ public class DisplayLevel extends DisplayableWindow
    */
   public void doScroll(boolean directionIsUp, Point location)
   {
-    if (Driver.DEBUG) System.out.println("An " + (directionIsUp ? "upward" : "downward") + " scroll has been registered!");
-    if (dragPath == null || (getSquare(location) != null && lvl.isDrawable(getSquare(location).add(0, 0, directionIsUp ? -1 : 1))))
+    if (Driver.DEBUG)
+      System.out.println("An " + (directionIsUp ? "upward" : "downward") + " scroll has been registered!");
+    Point3I loc = getSquare(location);
+    Point3I adj = null;
+    if (loc!=null)
+      adj = loc.add(0, 0, directionIsUp ? -1 : 1);
+    if (dragPath == null || (getSquare(location) != null && (lvl.isDrawable(adj) || (lvl.getPath(adj) != null && lvl.getPath(adj).getColor() == lvl.getPath(loc).getColor()))))
     {
       if (Driver.DEBUG) System.out.println("In here!");
       if (directionIsUp && layer > 0)
@@ -374,7 +380,6 @@ public class DisplayLevel extends DisplayableWindow
 
   private void drawLayerOr(int layer, double xPos, double yPos, double width)
   {
-    drawGrid(xPos, yPos, width);
     xPos -= width / 2D;
     yPos -= width / 2D;
     for (int x = 0; x < lvl.size(); x++)
@@ -387,16 +392,15 @@ public class DisplayLevel extends DisplayableWindow
           Display.drawRectangleOr((int) (xPos + (x+.5) * width / lvl.size()), (int) (yPos + (y+.5) * width / lvl.size()), (int) (width / lvl.size()), (int) (width / lvl.size()), true);
           Display.disableTransparency();
         }
-        drawPath(lvl.getPath(x, y, layer), xPos + x * width / lvl.size(), yPos + y * width / lvl.size(), width / lvl.size());
+        drawPath(new Point3I(x, y, layer), xPos + x * width / lvl.size(), yPos + y * width / lvl.size(), width / lvl.size());
       }
+
+    drawGrid(xPos, yPos, width);
   }
 
   private void drawGrid(double xPos, double yPos, double width)
   {
     int size = lvl.size();
-
-    xPos -= width / 2D;
-    yPos -= width / 2D;
 
     Display.setColor3(new Color( 191, 191, 191));
     glBegin(GL_LINE_LOOP);
@@ -420,71 +424,114 @@ public class DisplayLevel extends DisplayableWindow
     glEnd();
   }
 
-  private void drawPath(Path path, double xPos, double yPos, double width)
+  private void drawPath(Point3I pt, double xPos, double yPos, double width)
   {
-    if (path == null)
-      return;
+    xPos += width / 2D;
+    yPos += width / 2D;
+    Path path = lvl.getPath(pt);
+    if (path != null)
+    {
 
-    try
-    {
       Display.setColor3(path.getColor().toColor());
-    } catch (NullPointerException e)
-    {
-      e.printStackTrace();
-      Display.setColor3(new Color(191, 191, 191));
+
+      if (path.getType() == PathType.START)
+        Display.doCircle(xPos, yPos, width / 3D, true);
+      if (path.getType() == PathType.PATH)
+        Display.doCircle(xPos, yPos, width / 4D, true);
+
+      PathDirection nextDirection = path.getDirection();
+      if (nextDirection != null)
+      {
+        switch (nextDirection)
+        {
+          case UP:
+            glBegin(GL_POLYGON);
+            Display.doPointOr(xPos - width / 4D, yPos - width);
+            Display.doPointOr(xPos - width / 4D, yPos);
+            Display.doPointOr(xPos + width / 4D, yPos);
+            Display.doPointOr(xPos + width / 4D, yPos - width);
+            glEnd();
+            break;
+          case DOWN:
+            glBegin(GL_POLYGON);
+            Display.doPointOr(xPos - width / 4D, yPos);
+            Display.doPointOr(xPos - width / 4D, yPos + width);
+            Display.doPointOr(xPos + width / 4D, yPos + width);
+            Display.doPointOr(xPos + width / 4D, yPos);
+            glEnd();
+            break;
+          case LEFT:
+            glBegin(GL_POLYGON);
+            Display.doPointOr(xPos - width, yPos - width / 4D);
+            Display.doPointOr(xPos, yPos - width / 4D);
+            Display.doPointOr(xPos, yPos + width / 4D);
+            Display.doPointOr(xPos - width, yPos + width / 4D);
+            glEnd();
+            break;
+          case RIGHT:
+            glBegin(GL_POLYGON);
+            Display.doPointOr(xPos, yPos - width / 4D);
+            Display.doPointOr(xPos + width, yPos - width / 4D);
+            Display.doPointOr(xPos + width, yPos + width / 4D);
+            Display.doPointOr(xPos, yPos + width / 4D);
+            glEnd();
+            break;
+          default:
+        }
+
+        Display.setColor3(path.getColor().toColor().darker());
+        switch (nextDirection)
+        {
+          case IN:
+            glBegin(GL_TRIANGLES);
+            Display.doPointOr(xPos - width / 5D, yPos + width / 4D);
+            Display.doPointOr(xPos + width / 5D, yPos + width / 4D);
+            Display.doPointOr(xPos, yPos + width / 2D);
+            glEnd();
+            break;
+          case OUT:
+            glBegin(GL_TRIANGLES);
+            Display.doPointOr(xPos - width / 5D, yPos - width / 4D);
+            Display.doPointOr(xPos + width / 5D, yPos - width / 4D);
+            Display.doPointOr(xPos, yPos - width / 2D);
+            glEnd();
+            break;
+        }
+      }
     }
 
-    xPos+=width/2D;
-    yPos+=width/2D;
-    if (path.getType() == PathType.START)
-      Display.doCircle(xPos, yPos, width / 3D, true);
-    if (path.getType() == PathType.PATH)
-      Display.doCircle(xPos , yPos, width / 4D, true);
-
-    PathDirection nextDirection = path.getDirection();
-    if (nextDirection != null)
-      switch (nextDirection)
+    // The ones above.
+    path = lvl.getPath(PathDirection.IN.move(pt));
+    if (path != null)
+    {
+      Display.setColor3(path.getColor().toColor().darker());
+      if (lvl.getPath(pt) != null && path.getColor() == lvl.getPath(pt).getColor() && path.getDirection() == PathDirection.OUT)
       {
-        case IN:
-          //vee; TODO: IF THE CONNECTION IS TO HERE, THIS WILL NOT BE DRAWN. ONLY IF FROM HERE TO THERE.
-          break;
-        case OUT:
-          //caret; TODO: IF THE CONNECTION IS TO HERE, THIS WILL NOT BE DRAWN. ONLY IF FROM HERE TO THERE.
-          break;
-        case UP:
-          glBegin(GL_POLYGON);
-          Display.doPointOr(xPos - width / 4D, yPos - width);
-          Display.doPointOr(xPos - width / 4D, yPos);
-          Display.doPointOr(xPos + width / 4D, yPos);
-          Display.doPointOr(xPos + width / 4D, yPos - width);
-          glEnd();
-          break;
-        case DOWN:
-          glBegin(GL_POLYGON);
-          Display.doPointOr(xPos - width / 4D, yPos);
-          Display.doPointOr(xPos - width / 4D, yPos + width);
-          Display.doPointOr(xPos + width / 4D, yPos + width);
-          Display.doPointOr(xPos + width / 4D, yPos);
-          glEnd();
-          break;
-        case LEFT:
-          glBegin(GL_POLYGON);
-          Display.doPointOr(xPos - width, yPos - width / 4D);
-          Display.doPointOr(xPos, yPos - width / 4D);
-          Display.doPointOr(xPos, yPos + width / 4D);
-          Display.doPointOr(xPos - width, yPos + width / 4D);
-          glEnd();
-          break;
-        case RIGHT:
-          glBegin(GL_POLYGON);
-          Display.doPointOr(xPos, yPos - width / 4D);
-          Display.doPointOr(xPos + width, yPos - width / 4D);
-          Display.doPointOr(xPos + width, yPos + width / 4D);
-          Display.doPointOr(xPos, yPos + width / 4D);
-          glEnd();
-          break;
-        default:
+        glBegin(GL_TRIANGLES);
+        Display.doPointOr(xPos - width / 5D, yPos + width / 4D);
+        Display.doPointOr(xPos + width / 5D, yPos + width / 4D);
+        Display.doPointOr(xPos, yPos + width / 2D);
+        glEnd();
       }
-      // TODO: Draw a dot instead of a caret or vee in the same places for non-conected paths there.
+      else
+        Display.doCircle(xPos, yPos + width / 3D, width / 16D, true);
+    }
+
+    // The ones below
+    path = lvl.getPath(PathDirection.OUT.move(pt));
+    if (path != null)
+    {
+      Display.setColor3(path.getColor().toColor().darker());
+      if (lvl.getPath(pt) != null && path.getColor() == lvl.getPath(pt).getColor() && path.getDirection() == PathDirection.IN)
+      {
+        glBegin(GL_TRIANGLES);
+        Display.doPointOr(xPos - width / 5D, yPos - width / 4D);
+        Display.doPointOr(xPos + width / 5D, yPos - width / 4D);
+        Display.doPointOr(xPos, yPos - width / 2D);
+        glEnd();
+      }
+      else
+        Display.doCircle(xPos, yPos - width / 3D, width / 16D, true);
+    }
   }
 }
