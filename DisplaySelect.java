@@ -172,13 +172,13 @@ public class DisplaySelect extends DisplayableWindow
     {
         switch (numFromBottom)
         {
-            case 2:
+            case 0:
             Display.setColor3(PathColor.GREEN.toColor());
             break;
             case 1:
             Display.setColor3(PathColor.YELLOW.toColor());
             break;
-            case 0:
+            case 2:
             Display.setColor3(PathColor.RED.toColor());
             break;
             //default:
