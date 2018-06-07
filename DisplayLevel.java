@@ -205,7 +205,7 @@ public class DisplayLevel extends DisplayableWindow
   public void display(long window)
   {
     if (fade.get()==60 && fade.isIncreasing())
-      Display.setDisplay(new DisplayMenu());
+      Display.setDisplay(new DisplaySelect(Level.easy(),Level.medium(),Level.hard()));
     fade.tick();
 
     // Line between left and right sections
