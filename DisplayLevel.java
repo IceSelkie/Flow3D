@@ -134,10 +134,13 @@ public class DisplayLevel extends DisplayableWindow
       while (dragPath.contains(cell))
         dragPath.removeLast();
       dragPath.add(cell);
-      System.out.print("The drag path is: [");
-      for (Point3I p : dragPath)
-        System.out.print(p.toString() + ",");
-      System.out.println("].");
+      if (Driver.DEBUG)
+      {
+        System.out.print("The drag path is: [");
+        for (Point3I p : dragPath)
+          System.out.print(p.toString() + ",");
+        System.out.println("].");
+      }
     }
   }
 
@@ -158,7 +161,7 @@ public class DisplayLevel extends DisplayableWindow
       old = lvl;
     }
 
-    if (lvl.checkWin())
+    if (old.checkWin())
       fadeIn=false;
   }
 
@@ -172,10 +175,10 @@ public class DisplayLevel extends DisplayableWindow
    */
   public void doScroll(boolean directionIsUp, Point location)
   {
-    System.out.println("An " + (directionIsUp ? "upward" : "downward") + " scroll has been registered!");
+    if (Driver.DEBUG) System.out.println("An " + (directionIsUp ? "upward" : "downward") + " scroll has been registered!");
     if (dragPath == null || (getSquare(location) != null && lvl.isDrawable(getSquare(location).add(0, 0, directionIsUp ? -1 : 1))))
     {
-      System.out.println("In here!");
+      if (Driver.DEBUG) System.out.println("In here!");
       if (directionIsUp && layer > 0)
         layer--;
       if (!directionIsUp && layer + 1 < lvl.size())
@@ -209,7 +212,7 @@ public class DisplayLevel extends DisplayableWindow
     if (dragPath!=null)
     {
       lvl = old.clone();
-      LinkedList<Point3I> cpy =  (LinkedList<Point3I>) dragPath.clone();
+      LinkedList<Point3I> cpy = (LinkedList<Point3I>) dragPath.clone();
       makeDragPermanent();
       dragPath = cpy;
     }
