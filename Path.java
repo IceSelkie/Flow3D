@@ -1,7 +1,7 @@
 /**
  * Write a description of class Path here.
  *
- * @author (your name)
+ * @author Kevin Chen
  * @version (a version number or a date)
  */
 public class Path

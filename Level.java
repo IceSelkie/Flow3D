@@ -36,7 +36,8 @@ public class Level
     this(size);
 
     int startPositionCount = startPositionPairs.length;
-
+    
+    //checks if there are too little, or odd pairs of start positions
     if (startPositionCount % 2 != 0)
       throw new IllegalArgumentException("There must be an even number of end points, so that each start can be matched to an end point!");
     if (startPositionCount / 2 > PathColor.COUNT)
@@ -101,18 +102,18 @@ public class Level
   public static Level hard()
   {
     return new Level(4, new Point3I[]{
-        new Point3I(2, 1, 0), // RED
         new Point3I(2, 1, 1), // RED
-        new Point3I(0, 1, 0), // GREEN
-        new Point3I(0, 3, 1), // GREEN
-        new Point3I(1, 3, 1), // BLUE
-        new Point3I(0, 0, 3), // BLUE
-        new Point3I(2, 1, 2), // YELLOW
-        new Point3I(1, 2, 3), // YELLOW
-        new Point3I(0, 2, 2), // ORANGE
-        new Point3I(2, 3, 3), // ORANGE
+        new Point3I(0, 2, 3), // RED
+        new Point3I(3, 2, 0), // GREEN
+        new Point3I(2, 3, 2), // GREEN
+        new Point3I(0, 2, 0), // BLUE
+        new Point3I(1, 1, 1), // BLUE
+        new Point3I(2, 2, 3), // YELLOW
+        new Point3I(3, 0, 3), // YELLOW
+        new Point3I(2, 2, 2), // ORANGE
+        new Point3I(3, 2, 3), // ORANGE
         new Point3I(0, 0, 0), // MAGENTA
-        new Point3I(2, 2, 0), // MAGENTA
+        new Point3I(3, 0, 2), // MAGENTA
     });
   }
 
@@ -136,7 +137,7 @@ public class Level
    */
   public Path getPath(int x, int y, int z)
   {
-    if (validLocation(x, y, z))
+    if (validLocation(x, y, z))//validity check
     {
       return levelCube.get(x, y, z);
     }
@@ -151,7 +152,7 @@ public class Level
    */
   public Path getPath(Point3I location)
   {
-    if (location != null)
+    if (location != null)//validity check
       return getPath(location.getX(), location.getY(), location.getZ());
     return null;
   }
@@ -168,10 +169,10 @@ public class Level
    */
   public boolean isDrawable(int x, int y, int z)
   {
-    if (validLocation(x, y, z))
+    if (validLocation(x, y, z))//validity check
     {
       Path path = levelCube.get(x, y, z);
-      return (path == null || path.getType() != PathType.START);
+      return (path == null || path.getType() != PathType.START);//draws if not start or null
     }
     return false;
   }
@@ -186,7 +187,7 @@ public class Level
    */
   public boolean isDrawable(Point3I location)
   {
-    if (location != null)
+    if (location != null)//validity check
       return isDrawable(location.getX(), location.getY(), location.getZ());
     return false;
   }
@@ -286,25 +287,24 @@ public class Level
   {
     int size = size();
     Point3I found = null;
+    //3D matrix traversal
     for (int z = 0; z < size && found == null; z++)
       for (int y = 0; y < size && found == null; y++)
         for (int x = 0; x < size && found == null; x++)
         {
+            //finds the start position here
           Path pth = getPath(x, y, z);
           if (pth != null && pth.getColor() == color && (pth.getType() == PathType.START && pth.getDirection() != null))
             found = new Point3I(x, y, z);
         }
     if (found == null)
       return null;
-    /*while (getPath(found).getType() != PathType.START) // TODO THIS CRASHES ON EASY ((V< to V> to ^>) then (^< to ^>))
-    {
-      found = getPreviousInFlow(found);
-    }*/
 
     LinkedList<Point3I> flow = new LinkedList<>();
     flow.add(found);
     while (found != null && getPath(found) != null && getPath(found).getDirection() != null)
     {
+      //moves in the direction the points specify, sort of linked list style
       found = getPath(found).getDirection().move(found);
       flow.add(found);
     }
@@ -319,15 +319,16 @@ public class Level
    */
   public Point3I getPreviousInFlow(Point3I location)
   {
-    if (location != null)
+    if (location != null)//validity check
       if (getPath(location).getType() != PathType.START)
       {
         for (int i = 0; i < 6; i++)
-          if (validLocation(location.add(PathDirection.DIRECTIONS[i].move(new Point3I()))))
+          if (validLocation(location.add(PathDirection.DIRECTIONS[i].move(new Point3I()))))//if the moved location is valid
           {
-            Path pth = getPath(location.add(PathDirection.DIRECTIONS[i].move(new Point3I())));
+            Path pth = getPath(location.add(PathDirection.DIRECTIONS[i].move(new Point3I())));//moves the location in a direction
             if (pth != null && pth.getDirection() == PathDirection.DIRECTIONS[i].reverse())
             {
+              //moves backwards if the new path direction is legal
               return location.add(PathDirection.DIRECTIONS[i].move(new Point3I()));
             }
           }
@@ -376,7 +377,7 @@ public class Level
         for (int x = 0; x < size(); x++)
         {
           Path p = levelCube.get(x, y, z);
-          if (p != null && p.getColor() == color)
+          if (p != null && p.getColor() == color)//the color is the specified color, set to null
             if (p.getType() != PathType.START)
               levelCube.setPath(null, x, y, z);
             else
@@ -406,7 +407,12 @@ public class Level
         if (i == 3)
           levelCube = hard().levelCube;
   }
-
+  
+  /**
+   * Creates a clone of a level
+   * 
+   * @return the cloned level
+   */
   public Level clone()
   {
     Level clone = new Level(size());

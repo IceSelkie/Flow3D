@@ -92,37 +92,58 @@ public class DisplayTransitionHelper
 
     return a + (b - a) * interpolation.get((double) location / time);
   }
-
+  
+  /**
+   * Sets the increasing
+   */
   public void setIncreasing()
   {
     upward = true;
   }
-
+  
+  /**
+   * Sets the decreasing
+   */
   public void setDecreasing()
   {
     upward = false;
   }
-
+  
+  /**
+   * Reverses the direction
+   */
   public void reverseDirection()
   {
     upward = !upward;
   }
-
+  
+  /**
+   * @return t or f if increasing or decreasing
+   */
   public boolean isIncreasing()
   {
     return upward;
   }
-
+  
+  /**
+   * @return t or f if increasing or decreasing
+   */
   public boolean isDecreasing()
   {
     return !upward;
   }
-
+  
+  /**
+   * @return is the location
+   */
   public int getTime()
   {
     return location;
   }
-
+  
+  /**
+   * returns the interpolationType
+   */
   public InterpolationType getInterpolation()
   {
     return interpolation;

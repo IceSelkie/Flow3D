@@ -104,7 +104,12 @@ public class Cube
   {
     return size;
   }
-
+  
+  /**
+   * Creates a clone of the cube
+   * 
+   * @return is the cloned cube
+   */
   public Cube clone()
   {
     Cube clone = new Cube(size);

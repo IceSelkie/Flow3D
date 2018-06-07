@@ -245,8 +245,12 @@ public class DisplayLevel extends DisplayableWindow
 
   // **************** HELPER/ALMOSTSTATIC METHODS **************** // TODO
 
-
-
+  /**
+   * Checks of a given point is on another level.
+   * 
+   * @param is the point to be checked
+   * @return is the layer that it is on
+   */
   private int onAnotherLevel(Point clickLocation)
   {
     final int quantity = lvl.size();
@@ -269,14 +273,26 @@ public class DisplayLevel extends DisplayableWindow
     }
     return layer;
   }
-
+  
+  /**
+   * Checks if a location is on the main board
+   * 
+   * @param location is the location to be checked
+   * @return the on or not state
+   */
   private boolean onMainBoard(Point clickLocation)
   {
     int x = (int) clickLocation.getX();
     int y = (int) clickLocation.getY();
     return ((x >= displayLocations_GameLeft && x <= displayLocations_GameRight) && (y >= displayLocations_GameTop && y <= displayLocations_GameBottom));
   }
-
+  
+  /**
+   * Gets the square at a location
+   * 
+   * @param is the point to be checked
+   * @return the point of the square
+   */
   private Point3I getSquare(Point clickLocation)
   {
     if (!onMainBoard(clickLocation))
@@ -294,7 +310,9 @@ public class DisplayLevel extends DisplayableWindow
   // **************** METHODS THAT DO STUFF **************** // TODO
 
 
-
+  /**
+   * Cements the drag in the game
+   */
   private void makeDragPermanent()
   {
     if (dragPath == null || dragPath.size() == 0 || lvl.getPath(dragPath.getFirst()) == null)
@@ -377,7 +395,15 @@ public class DisplayLevel extends DisplayableWindow
     }
 
   }
-
+  
+  /**
+   * Draws a given layer
+   * 
+   * @param the layer to be drawn
+   * @param the x position
+   * @param the y position
+   * @param the width as a double
+   */
   private void drawLayerOr(int layer, double xPos, double yPos, double width)
   {
     xPos -= width / 2D;
@@ -397,7 +423,14 @@ public class DisplayLevel extends DisplayableWindow
 
     drawGrid(xPos, yPos, width);
   }
-
+  
+  /**
+   * Draws a given grid
+   * 
+   * @param the x position as a double
+   * @param the y position as a double
+   * @param the width as a double
+   */
   private void drawGrid(double xPos, double yPos, double width)
   {
     int size = lvl.size();
@@ -423,7 +456,15 @@ public class DisplayLevel extends DisplayableWindow
     }
     glEnd();
   }
-
+  
+  /**
+   * The path to be drawn
+   * 
+   * @param the start point
+   * @param the x position as a double
+   * @param the y position as a double
+   * @param the width as a double
+   */
   private void drawPath(Point3I pt, double xPos, double yPos, double width)
   {
     xPos += width / 2D;

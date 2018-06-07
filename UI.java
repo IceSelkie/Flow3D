@@ -2,7 +2,7 @@
 /**
  * Write a description of class UI here.
  *
- * @author Kaushik A
+ * @author PeteStrat
  * @version (a version number or a date)
  */
 

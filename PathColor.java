@@ -10,7 +10,7 @@ import java.awt.Color;
  */
 public enum PathColor
 {
-    RED, GREEN, BLUE, YELLOW, ORANGE, MAGENTA, AQUA;
+    RED, GREEN, BLUE, YELLOW, ORANGE, MAGENTA, AQUA;//color types
 
     public static final int COUNT = 7;
 
@@ -41,9 +41,16 @@ public enum PathColor
                 return null;
         }
     }
-
+    
+    /**
+     * Gets the PathColor based on the input
+     * 
+     * @param the number that determines which color is called
+     * @return the PathColor 
+     */
     public static PathColor get(int i)
     {
+        //uses modulus to determine the color
         switch (Math.abs(i)%COUNT)
         {
             case 0:
