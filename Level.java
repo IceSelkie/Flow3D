@@ -286,16 +286,15 @@ public class Level
         for (int x = 0; x < size && found == null; x++)
         {
           Path pth = getPath(x, y, z);
-          if (pth != null && pth.getColor() == color && (pth.getType() != PathType.START || pth.getDirection() != null))
+          if (pth != null && pth.getColor() == color && (pth.getType() == PathType.START && pth.getDirection() != null))
             found = new Point3I(x, y, z);
         }
     if (found == null)
       return null;
-    PathDirection[] dirs = new PathDirection[]{PathDirection.LEFT, PathDirection.RIGHT, PathDirection.UP, PathDirection.DOWN, PathDirection.OUT, PathDirection.IN};
-    while (getPath(found).getType() != PathType.START) // TODO THIS CRASHES ON EASY ((V< to V> to ^>) then (^< to ^>))
+    /*while (getPath(found).getType() != PathType.START) // TODO THIS CRASHES ON EASY ((V< to V> to ^>) then (^< to ^>))
     {
       found = getPreviousInFlow(found);
-    }
+    }*/
 
     LinkedList<Point3I> flow = new LinkedList<>();
     flow.add(found);

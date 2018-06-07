@@ -333,6 +333,50 @@ public class Display
         glColor4f(r / 255f, g / 255f, b / 255f, a / 255f);
     }
 
+    public static void setColorHSB3(int h, int s, int v)
+    {
+        setColorHSB4(h,s,v,255);
+    }
+
+    public static void setColorHSB4(int h, int s, int v, int a)
+    {
+        if (h<0)
+            h = h%360+360;
+        if (h>=360)
+            h%=360;
+        s = normalizeInt(s,0,100);
+        v = normalizeInt(v,0,100);
+
+        int c = v*s;
+        int x = c*(1-Math.abs(h/60%2-1));
+        int m = v-c;
+
+        s = s*255/100;
+        v = v*255/100;
+
+        int r=0,g=0,b=0;
+        if (s == 0) {
+
+            r = g = b = v;
+        } else {
+            int t1 = v;
+            int t2 = (255 - s) * v / 255;
+            int t3 = (t1 - t2) * (h % 60) / 60;
+
+            if (h == 360) h = 0;
+
+            if (h < 60) { r = t1; b = t2; g = t2 + t3 ;}
+            else if (h < 120) { g = t1; b = t2; r = t1 - t3 ;}
+            else if (h < 180) { g = t1; r = t2; b = t2 + t3 ;}
+                else if (h < 240) { b = t1; r = t2; g = t1 - t3 ;}
+                    else if (h < 300) { b = t1; g = t2; r = t2 + t3 ;}
+                        else if (h < 360) { r = t1; g = t2; b = t1 - t3 ;}
+                            else { r = 0; g = 0; b = 0 ;}
+        }
+
+        setColor3(r,g,b);
+    }
+
     public static void drawRectangleOr(int x, int y, int width, int height, boolean fill)
     {
         glBegin(fill ? GL_POLYGON : GL_LINE_LOOP);
@@ -393,7 +437,7 @@ public class Display
         currentlyDisplayed = newWindow;
     }
 
-    public WindowSize getWindowSize()
+    public static WindowSize getWindowSize()
     {
         try (MemoryStack stack = MemoryStack.stackPush())
         {
@@ -442,7 +486,16 @@ public class Display
         }
     }
 
-    public class WindowSize
+    public static int normalizeInt(int value, int min, int max)
+    {
+        if (value<min)
+            return min;
+        if (value>max)
+            return max;
+        return value;
+    }
+
+    public static class WindowSize
     {
         public final int w, h;
 
