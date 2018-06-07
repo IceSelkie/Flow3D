@@ -110,7 +110,7 @@ public class Level
         new Point3I(2, 1, 2), // YELLOW
         new Point3I(1, 2, 3), // YELLOW
         new Point3I(0, 2, 2), // ORANGE
-        new Point3I(3, 3, 3), // ORANGE
+        new Point3I(2, 3, 3), // ORANGE
         new Point3I(0, 0, 0), // MAGENTA
         new Point3I(2, 2, 0), // MAGENTA
     });
