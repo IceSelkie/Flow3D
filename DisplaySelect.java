@@ -191,14 +191,14 @@ public class DisplaySelect extends DisplayableWindow
      */
     private int getOverButton(Point location)
     {
-        int x = (int)location.getX();
-        int y = (int)location.getY();
-        if (x>=displayLocations_ButtonSideLeft && x<=displayLocations_ButtonSideRight)
-        {
-            y = (displayLocations_WindowCenterY + displayLocations_ButtonBuffer * levels.size()/2 - displayLocations_ButtonHeight / 2) - y;
-            if (y>0 && y % displayLocations_ButtonBufferedSizeY < displayLocations_ButtonHeight)
-                return y / displayLocations_ButtonBufferedSizeY;
-        }
-        return -1;
+      int x = (int) location.getX();
+      int y = (int) location.getY();
+      if (x >= displayLocations_ButtonSideLeft && x <= displayLocations_ButtonSideRight)
+      {
+        y = (displayLocations_WindowCenterY + displayLocations_ButtonBuffer * levels.size() / 2) - y;
+        if (y > 0 && y % displayLocations_ButtonBufferedSizeY < displayLocations_ButtonHeight)
+          return levels.size() - (y / displayLocations_ButtonBufferedSizeY) - 1;
+      }
+      return -1;
     }
 }
