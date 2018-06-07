@@ -19,6 +19,6 @@ public class Driver
    */
   public static void main(String[] args)
   {
-    new Display(new DisplaySelect(Level.hard(),Level.medium(),Level.easy())).run();
+    new Display(new DisplaySelect(Level.easy(),Level.medium(),Level.hard())).run();
   }
 }
