@@ -18,6 +18,7 @@ import static org.lwjgl.opengl.GL11.*;
 public class DisplayLevel extends DisplayableWindow
 {
   Level lvl; // The level that is currently displayed.
+  Level old;
   int layer; // Which level to display on the main display. The z-axis. 0 being top.
   LinkedList<Point3I> dragPath; // The path of which the user has dragged.
 
@@ -67,6 +68,7 @@ public class DisplayLevel extends DisplayableWindow
   {
     lvl = level;
     layer = 0;
+    old = lvl.clone();
   }
 
   /**
@@ -153,7 +155,11 @@ public class DisplayLevel extends DisplayableWindow
     {
       makeDragPermanent();
       dragPath = null;
+      old = lvl;
     }
+
+    if (lvl.checkWin())
+      fadeIn=false;
   }
 
   /**
@@ -190,14 +196,23 @@ public class DisplayLevel extends DisplayableWindow
   {
     if (fadeIn && fade>0)
       fade--;
-    //if (fade==60)
-    //  Display.setDisplay(new DisplayLevel(levels.get(clicked)));
+    if (fade==60)
+      Display.setDisplay(new DisplayMenu());
     if (!fadeIn)
       fade++;
 
     // Line between left and right sections
     Display.setColor3(new Color( 191, 191, 191));
     /* -.9 */Display.drawRectangleOr(displayLocations_LeftBarWidth, displayLocations_WindowCenterY, 2, displayLocations_WindowHeight,true);
+
+    // Update paths for top layer. This is the largest waste of CPU I could come up with. All that cloneing.
+    if (dragPath!=null)
+    {
+      lvl = old.clone();
+      LinkedList<Point3I> cpy =  (LinkedList<Point3I>) dragPath.clone();
+      makeDragPermanent();
+      dragPath = cpy;
+    }
 
     // Left bar and layers within
     for (int i = layer; i > layer- lvl.size() ; i--)
@@ -275,9 +290,9 @@ public class DisplayLevel extends DisplayableWindow
 
   private void makeDragPermanent()
   {
-    if (dragPath==null || dragPath.size()==0 || lvl.getPath(dragPath.getFirst())==null)
+    if (dragPath == null || dragPath.size() == 0 || lvl.getPath(dragPath.getFirst()) == null)
       throw new IllegalArgumentException("No path to make permanent!");
-    if (dragPath.size()==1)
+    if (dragPath.size() == 1)
       lvl.clearColor(lvl.getPath(dragPath.getFirst()).getColor());
 
     // Find the color of the path that is being drawn.
@@ -285,11 +300,11 @@ public class DisplayLevel extends DisplayableWindow
     // Clear those paths, so we can redraw them where they need to go.
     lvl.clearColor(clr);
 
-    if (lvl.getPath(dragPath.getFirst()).getType()!=PathType.START)
+    if (lvl.getPath(dragPath.getFirst()).getType() != PathType.START)
       throw new IllegalArgumentException("First path is not a START.");
 
     // Make sure all elements are next to each other and legal.
-    for (int i = 1; i<dragPath.size(); i++)
+    for (int i = 1; i < dragPath.size(); i++)
     {
       if (!lvl.validLocation(dragPath.get(i)))
       {
@@ -307,7 +322,7 @@ public class DisplayLevel extends DisplayableWindow
 
     // For each location in the dragpath, try to add the new path, and stop when reaching a point that cannot be passed.
     // i=0 is the {@code Start}ing point. Always.
-    for (int i = 1; i<dragPath.size(); i++)
+    for (int i = 1; i < dragPath.size(); i++)
     {
       Point3I dragPathi = dragPath.get(i);
       Point3I dragPathiPrev = dragPath.get(i - 1);
@@ -363,7 +378,16 @@ public class DisplayLevel extends DisplayableWindow
     yPos -= width / 2D;
     for (int x = 0; x < lvl.size(); x++)
       for (int y = 0; y < lvl.size(); y++)
+      {
+        if (old.getPath(x, y, layer)!=null)
+        {
+          Display.enableTransparency();
+          Display.setColor4(old.getPath(x, y, layer).getColor().toColor(), 63);
+          Display.drawRectangleOr((int) (xPos + (x+.5) * width / lvl.size()), (int) (yPos + (y+.5) * width / lvl.size()), (int) (width / lvl.size()), (int) (width / lvl.size()), true);
+          Display.disableTransparency();
+        }
         drawPath(lvl.getPath(x, y, layer), xPos + x * width / lvl.size(), yPos + y * width / lvl.size(), width / lvl.size());
+      }
   }
 
   private void drawGrid(double xPos, double yPos, double width)

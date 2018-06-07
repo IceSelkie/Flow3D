@@ -328,6 +328,11 @@ public class Display
         glColor4f(c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f, c.getAlpha() / 255f);
     }
 
+    public static void setColor4(Color c, int a)
+    {
+        glColor4f(c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f, a / 255f);
+    }
+
     public static void setColor4(int r, int g, int b, int a)
     {
         glColor4f(r / 255f, g / 255f, b / 255f, a / 255f);
