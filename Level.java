@@ -36,7 +36,7 @@ public class Level
       throw new IllegalArgumentException("There must be an even number of end points, so that each start can be matched to an end point!");
     if (startPositionCount / 2 > PathColor.COUNT)
       throw new IllegalArgumentException("There are too many start positions!");
-    for (int i = 0; i < startPositionCount; i += 2)
+    for (int i = 0; i < startPositionCount; i++)
     {
       Point3I pos = startPositionPairs[i];
       if (!validLocation(pos))
@@ -146,7 +146,9 @@ public class Level
    */
   public Path getPath(Point3I location)
   {
-    return getPath(location.getX(), location.getY(), location.getZ());
+    if (location != null)
+      return getPath(location.getX(), location.getY(), location.getZ());
+    return null;
   }
 
   /**
@@ -179,7 +181,9 @@ public class Level
    */
   public boolean isDrawable(Point3I location)
   {
-    return isDrawable(location.getX(), location.getY(), location.getZ());
+    if (location != null)
+      return isDrawable(location.getX(), location.getY(), location.getZ());
+    return false;
   }
 
   /**
@@ -311,18 +315,19 @@ public class Level
    */
   public Point3I getPreviousInFlow(Point3I location)
   {
-    if (getPath(location).getType() != PathType.START)
-    {
-      for (int i = 0; i < 6; i++)
-        if (validLocation(location.add(PathDirection.DIRECTIONS[i].move(new Point3I()))))
-        {
-          Path pth = getPath(location.add(PathDirection.DIRECTIONS[i].move(new Point3I())));
-          if (pth != null && pth.getDirection() == PathDirection.DIRECTIONS[i].reverse())
+    if (location != null)
+      if (getPath(location).getType() != PathType.START)
+      {
+        for (int i = 0; i < 6; i++)
+          if (validLocation(location.add(PathDirection.DIRECTIONS[i].move(new Point3I()))))
           {
-            return location.add(PathDirection.DIRECTIONS[i].move(new Point3I()));
+            Path pth = getPath(location.add(PathDirection.DIRECTIONS[i].move(new Point3I())));
+            if (pth != null && pth.getDirection() == PathDirection.DIRECTIONS[i].reverse())
+            {
+              return location.add(PathDirection.DIRECTIONS[i].move(new Point3I()));
+            }
           }
-        }
-    }
+      }
     return null;
   }
 
@@ -334,6 +339,7 @@ public class Level
    */
   public boolean checkWin()
   {
+    // Make sure every cell is filled.
     ArrayList<PathColor> colorsInLevel = new ArrayList<PathColor>(PathColor.COUNT);
     for (int z = 0; z < size(); z++)
       for (int y = 0; y < size(); y++)
@@ -344,7 +350,7 @@ public class Level
             if (!colorsInLevel.contains(getPath(x, y, z).getColor()))
               colorsInLevel.add(getPath(x, y, z).getColor());
 
-    // Make sure every Path is finished.
+    // Make sure every flow is complete.
     for (PathColor color : colorsInLevel)
     {
       LinkedList<Point3I> flow = getFlowPath(color);
@@ -366,43 +372,34 @@ public class Level
         for (int x = 0; x < size(); x++)
         {
           Path p = levelCube.get(x, y, z);
-          if (p != null && p.getColor() == color && p.getType() != PathType.START)
-            levelCube.setPath(null, x, y, z);
+          if (p != null && p.getColor() == color)
+            if (p.getType() != PathType.START)
+              levelCube.setPath(null, x, y, z);
+            else
+              p.setDirection(null);
         }
   }
-  
+
   /**
-     * Resets the level to a start level.
-     * 
-     * @param i is the int that represents which level to be reset to: 1 for
-     * easy, 2 for medium, and 3 for hard.
-     */
-    public void resetLvl(int i)
-    {        
-        for (int z = 0; z < levelCube.size(); z++)       
-            for (int y = 0; y < levelCube.size(); y++)           
-                for (int x = 0; x < levelCube.size(); x++)
-                {                    
-                    levelCube.setPath(null, x, y, z);                       
-                }
-                                    
-        if(i == 1)
-        {
-            easy();
-        }
-        else
-        {
-            if(i == 2)
-            {
-                medium();
-            }
-            else
-            {
-                if(i == 3)
-                {
-                    hard();
-                }
-            }
-        }
-    }
+   * Resets the level to a start level.
+   *
+   * @param i is the int that represents which level to be reset to: 1 for
+   *          easy, 2 for medium, and 3 for hard.
+   */
+  public void resetLvl(int i)
+  {
+    for (int z = 0; z < levelCube.size(); z++)
+      for (int y = 0; y < levelCube.size(); y++)
+        for (int x = 0; x < levelCube.size(); x++)
+          levelCube.setPath(null, x, y, z);
+
+    if (i == 1)
+      levelCube = easy().levelCube;
+    else
+      if (i == 2)
+        levelCube = medium().levelCube;
+      else
+        if (i == 3)
+          levelCube = hard().levelCube;
+  }
 }
