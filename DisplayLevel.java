@@ -1,6 +1,7 @@
 import org.lwjgl.glfw.GLFW;
 
 import java.awt.*;
+import java.awt.geom.Point2D;
 import java.util.LinkedList;
 
 import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_1;
@@ -274,8 +275,38 @@ public class DisplayLevel extends DisplayableWindow
 
   private void makeDragPermanent()
   {
+    if (dragPath==null || dragPath.size()==0 || lvl.getPath(dragPath.getFirst())==null)
+      throw new IllegalArgumentException("No path to make permanent!");
+    if (dragPath.size()==1)
+      lvl.clearColor(lvl.getPath(dragPath.getFirst()).getColor());
+
+    // Find the color of the path that is being drawn.
     PathColor clr = lvl.getPath(dragPath.getFirst()).getColor();
+    // Clear those paths, so we can redraw them where they need to go.
     lvl.clearColor(clr);
+
+    if (lvl.getPath(dragPath.getFirst()).getType()!=PathType.START)
+      throw new IllegalArgumentException("First path is not a START.");
+
+    // Make sure all elements are next to each other and legal.
+    for (int i = 1; i<dragPath.size(); i++)
+    {
+      if (!lvl.validLocation(dragPath.get(i)))
+      {
+        dragPath.remove(i--);
+      }
+      Point3I here = dragPath.get(i);
+      boolean nextTo = false;
+      here = dragPath.get(i - 1).add(-here.getX(), -here.getY(), -here.getZ());
+      for (PathDirection pdir : PathDirection.DIRECTIONS)
+        if (
+            pdir.move(new Point3I()).equals(here)) nextTo = true;
+      if (!nextTo)
+        dragPath.remove(i--);
+    }
+
+    // For each location in the dragpath, try to add the new path, and stop when reaching a point that cannot be passed.
+    // i=0 is the {@code Start}ing point. Always.
     for (int i = 1; i<dragPath.size(); i++)
     {
       Point3I dragPathi = dragPath.get(i);
@@ -284,28 +315,30 @@ public class DisplayLevel extends DisplayableWindow
       Path pathToReplace = lvl.getPath(dragPathi);
       if (pathToReplace != null)
       {
-        Path previousCutOff = lvl.getPath(lvl.getPreviousInFlow(dragPathi));
-        if (previousCutOff!=null)
-          previousCutOff.setDirection(null);
 
+        // Remove any elements in the cutoffflow after this point.
         LinkedList<Point3I> flow = lvl.getFlowPath(pathToReplace.getColor());
         if (flow != null && flow.contains(dragPathi))
         {
           while (!flow.getFirst().equals(dragPathi))
             flow.removeFirst();
+          flow.removeFirst();
 
           for (Point3I pt : flow)
             if (lvl.isDrawable(pt))
               lvl.deletePath(pt);
         }
+
+        // The one before it should no longer point to the one that isn't there.
+        Path previousCutOff = lvl.getPath(lvl.getPreviousInFlow(dragPathi));
+        if (previousCutOff != null)
+          previousCutOff.setDirection(null);
+        if (lvl.isDrawable(dragPathi))
+          lvl.deletePath(dragPathi);
       }
 
-      if (lvl.isDrawable(dragPathi))
-      {
-        lvl.setPath(dragPathi, clr, null);
-        lvl.getPath(dragPathiPrev).setDirection(PathDirection.get(dragPathiPrev, dragPathi));
-      }
-      else
+      // if it is a start, and this color, connect to it.
+      if (!lvl.isDrawable(dragPathi))
       {
         if (lvl.getPath(dragPathi).getColor() == clr)
         {
@@ -313,6 +346,11 @@ public class DisplayLevel extends DisplayableWindow
           lvl.getPath(dragPathi).setDirection(null);
         }
         i = dragPath.size();
+      }
+      else
+      {
+        lvl.setPath(dragPathi, clr, null);
+        lvl.getPath(dragPathiPrev).setDirection(PathDirection.get(dragPathiPrev, dragPathi));
       }
     }
 
