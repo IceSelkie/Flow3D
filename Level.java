@@ -68,7 +68,7 @@ public class Level
         new Point3I(0, 0, 0), // RED
         new Point3I(0, 1, 1), // RED
         new Point3I(0, 1, 0), // GREEN
-        new Point3I(1, 0, 1)  // GREEN
+        new Point3I(1, 1, 1)  // GREEN
     });
   }
 
