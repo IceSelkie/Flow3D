@@ -1,6 +1,5 @@
 import org.lwjgl.system.NativeType;
-
-import java.awt.*;
+import java.awt.Point;
 
 /**
  * abstract class DisplayableWindow
@@ -9,7 +8,7 @@ import java.awt.*;
  * to display each window.
  *
  * @author Stanley S. & Kaushik A.
- * @version 1.1
+ * @version 1.3
  */
 public abstract class DisplayableWindow
 {
