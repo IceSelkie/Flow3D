@@ -10,7 +10,7 @@ import java.util.Arrays;
  * The window data and layout for the window of the menu to select the different layers to play.
  *
  * @author Kaushik A. & Kevin C.
- * @version 0.0 (Not Started)
+ * @version 0.4 (Kinda-Maybe done.)
  */
 public class DisplaySelect extends DisplayableWindow
 {
@@ -185,7 +185,8 @@ public class DisplaySelect extends DisplayableWindow
     Display.drawRectangleOr(displayLocations_WindowCenterX, displayLocations_WindowCenterY + displayLocations_ButtonBufferedSizeY * numFromBottom - displayLocations_ButtonBuffer * levels.size(), (displayLocations_ButtonWidth) / 2, (displayLocations_ButtonHeight) / 2, true);
   }
 
-  /* Private Method.
+  /**
+   * Private Method.
    * Determines hitboxes for buttons (Easy Medium Hard)
    * Called within display method.
    */

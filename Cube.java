@@ -104,11 +104,11 @@ public class Cube
   {
     return size;
   }
-  
+
   /**
-   * Creates a clone of the cube
-   * 
-   * @return is the cloned cube
+   * Creates a clone of the this {@code Cube} object.
+   *
+   * @return The cloned object. See: {@link Object#clone()}
    */
   public Cube clone()
   {

@@ -92,57 +92,62 @@ public class DisplayTransitionHelper
 
     return a + (b - a) * interpolation.get((double) location / time);
   }
-  
+
   /**
-   * Sets the increasing
+   * Sets this {@code DisplayTransitionHelper} to increasing.
    */
   public void setIncreasing()
   {
     upward = true;
   }
-  
+
   /**
-   * Sets the decreasing
+   * Sets this {@code DisplayTransitionHelper} to decreasing.
    */
   public void setDecreasing()
   {
     upward = false;
   }
-  
+
   /**
-   * Reverses the direction
+   * Reverses this {@code DisplayTransitionHelper}'s direction from increasing to decreasing, or visa versa.
    */
   public void reverseDirection()
   {
     upward = !upward;
   }
-  
+
   /**
-   * @return t or f if increasing or decreasing
+   * Returns if this {@code DisplayTransitionHelper} is increasing or not.
+   * @return whether this {@code DisplayTransitionHelper} is increasing.
    */
   public boolean isIncreasing()
   {
     return upward;
   }
-  
+
   /**
-   * @return t or f if increasing or decreasing
+   * Returns if this {@code DisplayTransitionHelper} is decreasing or not.
+   * @return whether this {@code DisplayTransitionHelper} is decreasing.
    */
   public boolean isDecreasing()
   {
     return !upward;
   }
-  
+
   /**
-   * @return is the location
+   * Gets the current time within the transition.
+   *
+   * @return the time through the transition this {@code DisplayTransitionHelper} is currently at.
    */
   public int getTime()
   {
     return location;
   }
-  
+
   /**
-   * returns the interpolationType
+   * Returns the {@link InterpolationType} that is being used in this {@code DisplayTransitionHelper}.
+   * @return the {@link InterpolationType} used.
    */
   public InterpolationType getInterpolation()
   {

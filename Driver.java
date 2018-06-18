@@ -3,12 +3,17 @@
  * <p>
  * Has the main method to start the game of Flow3D.
  *
- * @author Kaushik Arunkumar
+ * @author Kaushik A. & Stanley S.
  * @version 1.0
  */
 public class Driver
 {
-  public static final boolean DEBUG = true;
+  /**
+   * Whether debug output in other classes should be enabled or not.
+   * <p>
+   * Default: {@code false}.
+   */
+  public static final boolean DEBUG = false;
 
   /**
    * Main: Let the wonderful game of <i>Flow</i> commence.
@@ -19,6 +24,6 @@ public class Driver
    */
   public static void main(String[] args)
   {
-    new Display(new DisplaySelect(Level.easy(),Level.medium(),Level.hard())).run();
+    new Display(new DisplaySelect(Level.easy(), Level.medium(), Level.hard())).run();
   }
 }
