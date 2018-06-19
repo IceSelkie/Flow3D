@@ -24,6 +24,6 @@ public class Driver
    */
   public static void main(String[] args)
   {
-    new Display(new DisplaySelect(Level.easy(), Level.medium(), Level.hard())).run();
+    new Display("Flow 3D", new DisplaySelect(Level.easy(), Level.medium(), Level.hard())).run();
   }
 }

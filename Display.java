@@ -15,135 +15,177 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 /**
- * Displays the game
+ * class Display
+ * <p>
+ * Used to create a window and display stuff to the screen.
  */
 public class Display
 {
+  /**
+   * The width of the window to create.
+   */
+  public static final int WINDOWWIDTH = 800;
+  /**
+   * The height of the window to create.
+   */
+  public static final int WINDOWHEIGHT = 600;
+  /**
+   * If the window is resizeable.
+   */
+  public static final boolean ALLOWRESIZE = false;
 
-    public static final int FPS = 60;
-    // The window handle
-    private static long window;
-    static WindowSize w;
-    static DisplayableWindow currentlyDisplayed;
-    boolean mouseIsDown = false;
-    double scrollAmount = 0;
-    /**
-     * Constructs the display windown
-     */
-    public Display(DisplayableWindow toDisplayFirst)
+  /**
+   * The FPS this window will try to run at.
+   */
+  public static final int FPS = 60;
+  /**
+   * The window handle.
+   * <p>
+   * The pointer to the Window object that OpenGL/GLFW uses.
+   */
+  private static long window;
+  /**
+   * The size of the window, contained within a {@link WindowSize}, an inner-class of {@code Display}. If {@link Display#ALLOWRESIZE} is {@code true}, then the window's size can change, and this will update and reflect that in real time. (Just before every frame is rendered)
+   */
+  public static WindowSize w;
+  /**
+   * The {@link DisplayableWindow} that is currently being displayed in the window.
+   */
+  private static DisplayableWindow currentlyDisplayed;
+  /**
+   *
+   */
+  public final String windowName;
+
+  /**
+   * Keeps track of whether the mouse is currently held down. Used to call {@link DisplayableWindow#doDrag(Point)}.
+   */
+  private boolean mouseIsDown = false;
+
+  /**
+   * Constructor for Display
+   * <p>
+   * Creates a new Display Object with the given {@link DisplayableWindow} object, and will call it to render stuff.
+   *
+   * @param toDisplayFirst The {@link DisplayableWindow} that will be displayed first.
+   */
+  public Display(String windowName, DisplayableWindow toDisplayFirst)
+  {
+    this.windowName = windowName;
+    currentlyDisplayed = toDisplayFirst;
+  }
+
+  /**
+   * Sets the currently displayed {@link DisplayableWindow} to the newly specified one.
+   *
+   * @param display The new {@link DisplayableWindow} to use and display.
+   */
+  public static void setDisplay(DisplayableWindow display)
+  {
+    currentlyDisplayed = display;
+  }
+
+  /**
+   * Opens the window, and starts it's render loop.
+   */
+  public void run()
+  {
+    init();
+    loop();
+    terminate();
+  }
+
+  /**
+   * Sets up OpenGL and GLFW, then opens the window. Window will hang and not work, unless a display loop is running. See: {@link Display#loop()}.
+   */
+  private void init()
+  {
+    // Prevent java.awt from interfering with this thread. If any awt stuff is called prior to this, the program will crash (Ex: {@code Color c = new Color(255,0,255);}).
+    System.setProperty("java.awt.headless", "true");
+
+    // Setup an error callback. The default implementation
+    // will print the error message in System.err.
+    GLFWErrorCallback.createPrint(System.err).set();
+
+    // Initialize GLFW. Most GLFW functions will not work before doing this.
+    if (!glfwInit())
+      throw new IllegalStateException("Unable to initialize GLFW");
+
+    // Configure GLFW
+    glfwDefaultWindowHints(); // optional, the current window hints are already the default
+    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); // the window will stay hidden after creation
+    glfwWindowHint(GLFW_RESIZABLE, ALLOWRESIZE ? GLFW_TRUE : GLFW_FALSE); // whether the window can be resized.
+
+    // Create the window
+    window = glfwCreateWindow(WINDOWWIDTH, WINDOWHEIGHT, windowName, NULL, NULL);
+    if (window == NULL)
+      throw new RuntimeException("Failed to create the GLFW window");
+
+    registerCallbacks();
+
+    // Get the thread stack and push a new frame
+    try (MemoryStack stack = MemoryStack.stackPush())
     {
-        currentlyDisplayed = toDisplayFirst;
-    }
-    
-    /**
-     * Sets the display
-     * 
-     * @param is the windown to display
-     */
-    public static void setDisplay(DisplayableWindow display)
+      IntBuffer pWidth = stack.mallocInt(1); // int*
+      IntBuffer pHeight = stack.mallocInt(1); // int*
+
+      // Get the window size passed to glfwCreateWindow
+      glfwGetWindowSize(window, pWidth, pHeight);
+
+      // Get the resolution of the primary monitor
+      GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+
+      // Center the window
+      glfwSetWindowPos(
+          window,
+          (vidmode.width() - pWidth.get(0)) / 2,
+          (vidmode.height() - pHeight.get(0)) / 2
+      );
+    } // the stack frame is popped automatically
+
+    // Make the OpenGL context current
+    glfwMakeContextCurrent(window);
+    // Enable v-sync
+    glfwSwapInterval(1);
+
+    // Make the window visible
+    glfwShowWindow(window);
+  }
+
+  /**
+   * Register the call backs from GLFW for the keyboard, mouse clicks, and scrolling.
+   */
+  private void registerCallbacks()
+  {
+    // Setup a key callback. It will be called every time a key is pressed, repeated or released.
+    glfwSetKeyCallback(window, (window, key, scancode, action, mods) ->
     {
-        currentlyDisplayed = display;
-    }
-    
-    /**
-     * Runs the game
-     */
-    public void run()
+      if (currentlyDisplayed != null)
+        currentlyDisplayed.keyPress(key, action);
+
+      //if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE)
+      //  glfwSetWindowShouldClose(window, true);
+    });
+
+    glfwSetMouseButtonCallback(window, (window, button, action, mods) ->
     {
-        //System.out.println("Hello LWJGL " + Version.getVersion() + "!");
-
-        init();
-        loop();
-        terminate();
-    }
-    
-    /**
-     * Initializes the loading screen and such
-     */
-    private void init()
-    {
-        // Prevent awt from interfering with this thread.
-        System.setProperty("java.awt.headless", "true");
-
-        // Setup an error callback. The default implementation
-        // will print the error message in System.err.
-        GLFWErrorCallback.createPrint(System.err).set();
-
-        // Initialize GLFW. Most GLFW functions will not work before doing this.
-        if (!glfwInit())
-            throw new IllegalStateException("Unable to initialize GLFW");
-
-        // Configure GLFW
-        glfwDefaultWindowHints(); // optional, the current window hints are already the default
-        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); // the window will stay hidden after creation
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE); // the window will not be resizable
-
-        // Create the window
-        window = glfwCreateWindow(800, 600, "Flow: 3D", NULL, NULL);
-        if (window == NULL)
-            throw new RuntimeException("Failed to create the GLFW window");
-
-        registerCallbacks();
-
-        // Get the thread stack and push a new frame
-        try (MemoryStack stack = MemoryStack.stackPush())
+      if (currentlyDisplayed != null)
+        if (action == GLFW_PRESS)
         {
-            IntBuffer pWidth = stack.mallocInt(1); // int*
-            IntBuffer pHeight = stack.mallocInt(1); // int*
+          mouseIsDown = true;
+          currentlyDisplayed.doClick(button, getCursorLocationOrigin(w));
+        }
+        else
+          if (action == GLFW_RELEASE)
+          {
+            mouseIsDown = false;
+            currentlyDisplayed.doRelease(button, getCursorLocationOrigin(w));
+          }
+    });
 
-            // Get the window size passed to glfwCreateWindow
-            glfwGetWindowSize(window, pWidth, pHeight);
-
-            // Get the resolution of the primary monitor
-            GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-
-            // Center the window
-            glfwSetWindowPos(
-                  window,
-                  (vidmode.width() - pWidth.get(0)) / 2,
-                  (vidmode.height() - pHeight.get(0)) / 2
-            );
-        } // the stack frame is popped automatically
-
-        // Make the OpenGL context current
-        glfwMakeContextCurrent(window);
-        // Enable v-sync
-        glfwSwapInterval(1);
-
-        // Make the window visible
-        glfwShowWindow(window);
-    }
-    
-    /**
-     * Register the call backs from the LWJGL
-     */
-    private void registerCallbacks()
+    glfwSetScrollCallback(window, (window, xoffset, yoffset) ->
     {
-        // Setup a key callback. It will be called every time a key is pressed, repeated or released.
-        glfwSetKeyCallback(window, (window, key, scancode, action, mods) ->
-        {
-            if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE)
-                glfwSetWindowShouldClose(window, true); // We will detect this in the rendering loop
-        });
-
-        glfwSetMouseButtonCallback(window, (window, button, action, mods) ->
-        {
-            if (currentlyDisplayed != null)
-                if (action == GLFW_PRESS)
-                {
-                    mouseIsDown = true;
-                    currentlyDisplayed.doClick(button, getCursorLocationOrigin(w));
-                }
-                else if (action == GLFW_RELEASE)
-                {
-                    mouseIsDown = false;
-                    currentlyDisplayed.doRelease(button, getCursorLocationOrigin(w));
-                }
-        });
-
-        glfwSetScrollCallback(window, (window, xoffset, yoffset) ->
-        {
-            currentlyDisplayed.doScroll(yoffset>0, getCursorLocationOrigin(w));
+      currentlyDisplayed.doScroll(yoffset > 0, getCursorLocationOrigin(w));
             /*
             scrollAmount += yoffset;
             while (scrollAmount <= -1)
@@ -156,548 +198,537 @@ public class Display
                 scrollAmount -= 1;
                 currentlyDisplayed.doScroll(true, getCursorLocationOrigin(w));
             }*/
-        });
+    });
+  }
+
+  /**
+   * The main display loop.
+   * <p>
+   * Loops and calls {@link DisplayableWindow#display(long)} {@link Display#FPS} times per second, until the window gets closed.
+   */
+  private void loop()
+  {
+    // This line is critical for LWJGL's interoperation with GLFW's
+    // OpenGL context, or any context that is managed externally.
+    // LWJGL detects the context that is current in the current thread,
+    // creates the GLCapabilities instance and makes the OpenGL
+    // bindings available for use.
+    GL.createCapabilities();
+
+    // Set the clear/background color
+    glClearColor(0.0f, 0.0f, 0.25f, 1.0f); // Was that greenish: .3 .7 .6 .0
+
+
+    // Run the rendering loop until the user has attempted to close
+    // the window or has pressed the ESCAPE key.
+
+    long time = System.nanoTime();
+    while (!glfwWindowShouldClose(window))
+    {
+      time = sleep(FPS, time);
+
+      // Poll for window events. The key callback above will only be
+      // invoked during this call.
+      glfwPollEvents();
+
+      if (mouseIsDown)
+        currentlyDisplayed.doDrag(getCursorLocationOrigin(w));
+
+      update();
+      render();
+      finishRender();
     }
-    
-    /**
-     * Loops the game 
-     */
-    private void loop()
+  }
+
+  /**
+   * Sleeps this thread until the next frame should be drawn.
+   *
+   * @param updates_per_second the FPS this is being used to calculate. Should be {@link Display#FPS}, but can be different.
+   * @param last_execution     The {@link System#nanoTime()} of the last frame drawn. Used to calculate sleep time.
+   * @return the current {@link System#nanoTime()}: The time this frame was drawn. Should be used as the {@code last_execution}, next time this is called.
+   */
+  private long sleep(int updates_per_second, long last_execution)
+  {
+    double maxSleepMS = 1000D / updates_per_second;
+    double msSinceLastSleep = (System.nanoTime() - last_execution) / 1000000D;
+    if (maxSleepMS > msSinceLastSleep)
     {
-        // This line is critical for LWJGL's interoperation with GLFW's
-        // OpenGL context, or any context that is managed externally.
-        // LWJGL detects the context that is current in the current thread,
-        // creates the GLCapabilities instance and makes the OpenGL
-        // bindings available for use.
-        GL.createCapabilities();
-
-        // Set the clear/background color
-        glClearColor(0.0f, 0.0f, 0.25f, 1.0f); // Was that greenish: .3 .7 .6 .0
-
-
-        // Run the rendering loop until the user has attempted to close
-        // the window or has pressed the ESCAPE key.
-
-        long time = System.nanoTime();
-        while (!glfwWindowShouldClose(window))
-        {
-            time = sleep(FPS, time);
-            if (mouseIsDown)
-                currentlyDisplayed.doDrag(getCursorLocationOrigin(w));
-            //input();
-            update();
-            render();
-            finishRender();
-        }
-    }
-    
-    /**
-     * Causes the sleep
-     * 
-     * @param the updates 
-     * @param the last execution
-     */
-    private long sleep(int updates_per_second, long last_execution)
-    {
-        double maxSleepMS = 1000D / updates_per_second;
-        double msSinceLastSleep = (System.nanoTime() - last_execution) / 1000000D;
-        if (maxSleepMS > msSinceLastSleep)
-        {
-            //System.out.printf("Sleeping for \t"+(long)(maxSleepMS-msSinceLastSleep)+" of \t"+(long)maxSleepMS+"ms.\n");
-            try
-            {
-                Thread.sleep((long) (maxSleepMS - msSinceLastSleep));
-            } catch (InterruptedException e)
-            {
-                System.err.println("Sleep Interrupted!");
-                e.printStackTrace();
-            }
-        }
-        //else
-        //  System.err.println("This thread is running behind! This is no time to rest! ("+(long)(msSinceLastSleep-maxSleepMS)+"ms behind next scheduled update time.)");
-        return System.nanoTime();//last_execution+(long)(maxSleepMS*1000000);
-    }
-    
-    /**
-     * Updates the game
-     */
-    private void update()
-    {
-        w = getWindowSize();
-        // clear the framebuffer
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        //Enables the depth buffer. Can do some weird stuff, like disable transparency.
-        /*glEnable(GL_DEPTH_TEST);*/
-
-        //glEnable(GL_BLEND);
-        glDepthFunc(GL_LESS);
-        glShadeModel(GL_SMOOTH);
-    }
-    
-    /**
-     * Renders the game
-     */
-    private void render()
-    {
-        glPointSize(10);
-        glLineWidth(5F);
-        glColor3f(Color.BLUE.getRed() / 255f, Color.BLUE.getGreen() / 255f, Color.BLUE.getBlue() / 255f);
-    /*
-    drawLine(w, 5f, Color.ORANGE, new Point(100, 200), new Point(200, 100));
-
-    glBegin(GL_LINE_LOOP);
-    glVertex2d(0, 0);
-    glVertex2d(100d / w.getWidth(), 100d / w.getHeight());
-    glVertex2d(100d / w.getWidth(), 0);
-    glVertex2d(-100d / w.getWidth(), 100d / w.getHeight());
-    glEnd();
-    */
-
-        currentlyDisplayed.display(window);
-
-    /*
-    glBegin(GL_POINTS);
-    for (int i = 0; i < clicks.size(); i++)
-    {
-      Point2D p = clicks.getPath(i);
-      double v = o.getPath(i).getX();
-      double y = o.getPath(i).getY();
-      y += v;
-      Color c = randomColor(p.hashCode());
-      glColor3f(c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f);
-      glVertex2d(p.getX() / w.getWidth(), (p.getY() - y) / w.getHeight());
-      //p.setLocation(p.getX(), p.getY() - y);
-      o.set(i, new Point2D.Double(v + .1, y));
-      if (y / 2D > w.getHeight())
+      //System.out.printf("Sleeping for \t"+(long)(maxSleepMS-msSinceLastSleep)+" of \t"+(long)maxSleepMS+"ms.\n");
+      try
       {
-        clicks.remove(i);
-        o.remove(i--);
+        Thread.sleep((long) (maxSleepMS - msSinceLastSleep));
+      } catch (InterruptedException e)
+      {
+        System.err.println("Sleep Interrupted!");
+        e.printStackTrace();
       }
     }
-    glEnd();
-    */
+    //else
+    //  System.err.println("This thread is running behind! This is no time to rest! ("+(long)(msSinceLastSleep-maxSleepMS)+"ms behind next scheduled update time.)");
+    return System.nanoTime();//last_execution+(long)(maxSleepMS*1000000);
+  }
 
-        //System.out.println(getWindowSize());
-    }
-    
-    /**
-     * Finishes the render
-     */
-    private void finishRender()
-    {
-        glfwSwapBuffers(window); // swap the color buffers
-
-        // Poll for window events. The key callback above will only be
-        // invoked during this call.
-        glfwPollEvents();
-    }
-    
-    /**
-     * Terminates the window
-     */
-    private void terminate()
-    {
-        // Free the window callbacks and destroy the window
-        glfwFreeCallbacks(window);
-        glfwDestroyWindow(window);
-
-        // Terminate GLFW and free the error callback
-        glfwTerminate();
-        glfwSetErrorCallback(null).free();
-    }
-
-
-
-    // **************** METHODS TO DRAW STUFF **************** //TODO
-
-
-
-  /*public static void doPointCart(double x, double y)
-  {
-    doPointCart(x, y, 0);
-  }*/
-
-    /**
-     * After running enableTransparency, transparent objects can be drawn.
-     * <p>
-     * Please use {@link #disableTransparency()} afterwards to disable it.
-     */
-    protected static void enableTransparency()
-    {
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    }
-
-    /**
-     * After running disableTransparency, transparent objects can no longer be drawn.
-     * <p>
-     * Use {@link #enableTransparency()} again to reenable it.
-     */
-    protected static void disableTransparency()
-    {
-        glDisable(GL_BLEND);
-    }
-    
-    /**
-     * Alters the vertex
-     * 
-     * @param x is the x value 
-     * @param the y value
-     */
-    public static void doPointCart(double x, double y)
-    {
-        glVertex3d(x / (w.getWidth() / 2D), y / (w.getHeight() / 2D), 0);
-    }
-
-  /*public static void doPointOr(double x, double y)
-  {
-    doPointCart(x - w.getWidth() / 2D, w.getHeight() / 2D - y, 0);
-  }*/
-    
-   /**
-   * Alters the vertex in another way
-   * 
-   * @param the x to be altered
-   * @param the y to be altered
+  /**
+   * Updates a few things, like {@link Display#w} to the new current values. Also sets up OpenGL and GLFW for the next frame to be drawn.
    */
-    public static void doPointOr(double x, double y)
+  private void update()
+  {
+    w = getWindowSize();
+    // clear the framebuffer
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    //Enables the depth buffer. IF DEPTH BUFFER IS ON, THERE IS NO TRANSPARENCY!
+    /*glEnable(GL_DEPTH_TEST);*/
+
+    //glEnable(GL_BLEND); //I don't really know what this does.
+    glDepthFunc(GL_LESS);
+    glShadeModel(GL_SMOOTH);
+  }
+
+  /**
+   * Renders the next frame.
+   */
+  private void render()
+  {
+    glPointSize(10);
+    glLineWidth(5F);
+    Display.setColor3(Color.BLUE);
+
+    // Draw the stuff for this {@link DisplayableWindow}.
+    currentlyDisplayed.display(window);
+  }
+
+  /**
+   * Displays the rendered frame, and takes care of double buffering stuff.
+   */
+  private void finishRender()
+  {
+    glfwSwapBuffers(window); // swap the color buffers
+  }
+
+  /**
+   * Closes the window and does other cleanup stuff.
+   */
+  private void terminate()
+  {
+    // Free the window callbacks and destroy the window
+    glfwFreeCallbacks(window);
+    glfwDestroyWindow(window);
+
+    // Terminate GLFW and free the error callback
+    glfwTerminate();
+    glfwSetErrorCallback(null).free();
+  }
+
+
+  // **************** METHODS TO DRAW STUFF **************** //TODO
+
+
+  /**
+   * After running enableTransparency, transparent objects can be drawn.
+   * <p>
+   * Please use {@link #disableTransparency()} afterwards to disable it.
+   */
+  protected static void enableTransparency()
+  {
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  }
+
+  /**
+   * After running disableTransparency, transparent objects can no longer be drawn.
+   * <p>
+   * Use {@link #enableTransparency()} again to reenable it.
+   */
+  protected static void disableTransparency()
+  {
+    glDisable(GL_BLEND);
+  }
+
+  /**
+   * Adds a point to the screen, using cartesian coordinates.
+   * <p>
+   * Coordinates: (0,0) maps to the center of the screen.
+   * Positive x is to the right from the center.
+   * Positive y is upward from the center.
+   */
+  public static void doPointCart(double x, double y)
+  {
+    glVertex2d(x / (w.getWidth() / 2D), y / (w.getHeight() / 2D));
+  }
+
+  /**
+   * Adds a point to the screen, using coordinates from the origin.
+   * <p>
+   * Coordinates: (0,0) (origin) maps to the top left corner of the screen.
+   * Positive x is to the right from the origin.
+   * Positive y is downward from the origin.
+   */
+  public static void doPointOr(double x, double y)
+  {
+    doPointCart(x - w.getWidth() / 2D, w.getHeight() / 2D - y);
+  }
+
+  /**
+   * Sets the color to draw without transparency.
+   *
+   * @param c The {@link java.awt.Color} object to set the color to.
+   */
+  public static void setColor3(Color c)
+  {
+    glColor3f(c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f);
+  }
+
+  /**
+   * Sets the color to draw without transparency.
+   *
+   * @param r A value between 0 and 255 for the red component of the color.
+   * @param g A value between 0 and 255 for the green component of the color.
+   * @param b A value between 0 and 255 for the blue component of the color.
+   */
+  public static void setColor3(int r, int g, int b)
+  {
+    glColor3f(r / 255f, g / 255f, b / 255f);
+  }
+
+  /**
+   * Sets the color to draw with transparency.
+   *
+   * @param c The {@link java.awt.Color} object to set the color to, including the transparency component.
+   */
+  public static void setColor4(Color c)
+  {
+    glColor4f(c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f, c.getAlpha() / 255f);
+  }
+
+  /**
+   * Sets the color to draw with transparency.
+   *
+   * @param c The {@link java.awt.Color} object to set the color to.
+   * @param a A value between 0 and 255 for the alpha component of the color. Transparency, with 0 being fully transparent and 255 being opaque.
+   */
+  public static void setColor4(Color c, int a)
+  {
+    glColor4f(c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f, a / 255f);
+  }
+
+  /**
+   * Sets the color to draw without transparency.
+   *
+   * @param r A value between 0 and 255 for the red component of the color.
+   * @param g A value between 0 and 255 for the green component of the color.
+   * @param b A value between 0 and 255 for the blue component of the color.
+   * @param a A value between 0 and 255 for the alpha component of the color. Transparency, with 0 being fully transparent and 255 being opaque.
+   */
+  public static void setColor4(int r, int g, int b, int a)
+  {
+    glColor4f(r / 255f, g / 255f, b / 255f, a / 255f);
+  }
+
+  /**
+   * Sets the color to draw without transparency.
+   *
+   * @param hue        A value between 0 and 359 for the hue component of the color.
+   * @param saturation A value between 0 and 100 for the saturation component of the color.
+   * @param brightness A value between 0 and 100 for the brightness component of the color.
+   */
+  public static void setColorHSB3(int hue, int saturation, int brightness)
+  {
+    setColorHSB4(hue, saturation, brightness, 255);
+  }
+
+  /**
+   * Sets the color to draw without transparency.
+   *
+   * @param hue        A value between 0 and 359 for the hue component of the color.
+   * @param saturation A value between 0 and 100 for the saturation component of the color.
+   * @param brightness A value between 0 and 100 for the brightness component of the color.
+   * @param alpha      A value between 0 and 255 for the alpha component of the color. Transparency, with 0 being fully transparent and 255 being opaque.
+   */
+  public static void setColorHSB4(int hue, int saturation, int brightness, int alpha)
+  {
+    setColor4(hsb4ToColor(hue, saturation, brightness, alpha));
+  }
+
+  /**
+   * Converts the HSBA color to a Color object.
+   *
+   * @param hue        A value between 0 and 359 for the hue component of the color.
+   * @param saturation A value between 0 and 100 for the saturation component of the color.
+   * @param brightness A value between 0 and 100 for the brightness component of the color.
+   * @param alpha      A value between 0 and 255 for the alpha component of the color. Transparency, with 0 being fully transparent and 255 being opaque.
+   */
+  public static Color hsb4ToColor(int hue, int saturation, int brightness, int alpha)
+  {
+    if (hue < 0)
+      hue = hue % 360 + 360;
+    if (hue >= 360)
+      hue %= 360;
+    saturation = normalizeInt(saturation, 0, 100);
+    brightness = normalizeInt(brightness, 0, 100);
+
+    saturation = saturation * 255 / 100;
+    brightness = brightness * 255 / 100;
+
+    int red = 0, green = 0, blue = 0;
+
+    if (saturation == 0) { red = green = blue = brightness; }
+    else
     {
-        doPointCart(x - w.getWidth() / 2D, w.getHeight() / 2D - y);
+      int t1 = brightness;
+      int t2 = (255 - saturation) * brightness / 255;
+      int t3 = (t1 - t2) * (hue % 60) / 60;
+
+      if (hue < 60) { red = t1; blue = t2; green = t2 + t3; }
+      else if (hue < 120) { green = t1; blue = t2; red = t1 - t3; }
+      else if (hue < 180) { green = t1; red = t2; blue = t2 + t3; }
+      else if (hue < 240) { blue = t1; red = t2; green = t1 - t3; }
+      else if (hue < 300) { blue = t1; green = t2; red = t2 + t3; }
+      else if (hue < 360) { red = t1; green = t2; blue = t1 - t3; }
+      else { red = 0; green = 0; blue = 0; }
     }
-    
+    return new Color(red, green, blue, alpha);
+  }
+
+  /**
+   * Draws an optionally filled rectangle, using coordinates from the origin.
+   *
+   * @param x      Center of the rectangle's X coordinate.
+   * @param y      Center of the rectangle's Y coordinate.
+   * @param width  The width of the rectangle.
+   * @param height The height of the rectangle.
+   * @param fill   If the rectangle should be filled.
+   */
+  public static void drawRectangleOr(int x, int y, int width, int height, boolean fill)
+  {
+    glBegin(fill ? GL_POLYGON : GL_LINE_LOOP);
+    doPointOr(x - width / 2, y - height / 2);
+    doPointOr(x + width / 2, y - height / 2);
+    doPointOr(x + width / 2, y + height / 2);
+    doPointOr(x - width / 2, y + height / 2);
+    glEnd();
+  }
+
+  /**
+   * Draws a line, using coordinates from the origin.
+   *
+   * @param start The start location of the line, using coordinates from the origin.
+   * @param end   The end location of the line, using coordinates from the origin.
+   */
+  public static void drawLineOr(Point start, Point end)
+  {
+    glBegin(GL_LINES);
+    doPointOr(start.getX(), start.getY());
+    doPointOr(end.getX(), end.getY());
+    glEnd();
+  }
+
+  /**
+   * Draws a circle, using coordinates from the origin.
+   *
+   * @param xPos   Center of the circle's X coordinate.
+   * @param yPos   Center of the circle's Y coordinate.
+   * @param radius Radius of the Circle
+   * @param fill   If the circle should be filled.
+   */
+  public static void doCircle(double xPos, double yPos, double radius, boolean fill)
+  {
+    int num_segments = (int) (7 * radius);
+    double theta = 2 * PI / num_segments;
+
+    double tangetial_factor = tan(theta); //calculate the tangential factor
+    double radial_factor = cos(theta); //calculate the radial factor
+
+    double x = radius; //we start at angle = 0
+    double y = 0;
+
+    glBegin(fill ? GL_POLYGON : GL_LINE_LOOP);
+    for (int i = 0; i < num_segments; i++)
+    {
+      doPointOr(xPos + x, yPos + y);//output vertex
+
+      //calculate the tangential vector
+      //remember, the radial vector is (x, y)
+      //to getPath the tangential vector we flip those coordinates and negate one of them
+      double tx = -y;
+      double ty = x;
+
+      //add the tangential vector
+      x += tx * tangetial_factor;
+      y += ty * tangetial_factor;
+
+      //correct using the radial factor
+      x *= radial_factor;
+      y *= radial_factor;
+    }
+    glEnd();
+  }
+
+
+  // **************** MY METHODS FOR HELPING ME **************** //TODO
+
+  /**
+   * Changes the currently displayed window to the specified {@link DisplayableWindow}.
+   *
+   * @param newWindow The new {@link DisplayableWindow} to be displayed.
+   */
+  public void setWindow(DisplayableWindow newWindow)
+  {
+    currentlyDisplayed = newWindow;
+  }
+
+  /**
+   * Gets the size of the window, and returns it as a {@link WindowSize}.
+   *
+   * @return the size of the window as a {@link WindowSize}.
+   */
+  public static WindowSize getWindowSize()
+  {
+    try (MemoryStack stack = MemoryStack.stackPush())
+    {
+      //int* width = malloc(1);
+      IntBuffer pWidth = stack.mallocInt(1); // int*
+      IntBuffer pHeight = stack.mallocInt(1); // int*
+
+      glfwGetWindowSize(window, pWidth, pHeight);
+      return new WindowSize(pWidth.get(), pHeight.get());
+    } catch (IllegalArgumentException e)
+    {
+      return new WindowSize(0, 0);
+    }
+  }
+
+  /**
+   * Gets the cursor's location, using coordinates from the origin.
+   *
+   * @param w the size of the window, to adjust the cursor's location from ratios to the exact values.
+   * @return The cursor's location in a {@link Point2D.Double}.
+   */
+  public Point2D getCursorLocationCartesian(WindowSize w)
+  {
+    try (MemoryStack stack = MemoryStack.stackPush())
+    {
+      //double* x = malloc(1);
+      DoubleBuffer x = stack.mallocDouble(1); // int*
+      DoubleBuffer y = stack.mallocDouble(1); // int*
+
+      glfwGetCursorPos(window, x, y);
+      return new Point2D.Double(x.get() - w.getWidth() / 2D, w.getHeight() / 2D - y.get());
+    } catch (IllegalArgumentException e)
+    {
+      return null;
+    }
+  }
+
+  /**
+   * Gets the cursor's location, using coordinates from the origin.
+   *
+   * @param w the size of the window, to adjust the cursor's location from ratios to the exact values.
+   * @return The cursor's location in a {@link java.awt.Point}.
+   */
+  public static Point getCursorLocationOrigin(WindowSize w)
+  {
+    try (MemoryStack stack = MemoryStack.stackPush())
+    {
+      //double* x = malloc(1);
+      DoubleBuffer x = stack.mallocDouble(1); // int*
+      DoubleBuffer y = stack.mallocDouble(1); // int*
+
+      glfwGetCursorPos(window, x, y);
+
+      return new Point((int) Math.round(x.get()), (int) Math.round(y.get()));
+    } catch (IllegalArgumentException e)
+    {
+      return null;
+    }
+  }
+
+  /**
+   * Restricts an integer value into a given range.
+   *
+   * @param value The given value to normalize.
+   * @param min   The lower bound of the range.
+   * @param max   The upper bound of the range.
+   * @return the value normalized into the given range.
+   */
+  public static int normalizeInt(int value, int min, int max)
+  {
+    if (value <= min)
+      return min;
+    if (value >= max)
+      return max;
+    return value;
+  }
+
+  /**
+   * Restricts an double value into a given range.
+   *
+   * @param value The given value to normalize.
+   * @param min   The lower bound of the range.
+   * @param max   The upper bound of the range.
+   * @return the value normalized into the given range.
+   */
+  public static double normalizeDouble(double value, double min, double max)
+  {
+    if (value < min)
+      return min;
+    if (value > max)
+      return max;
+    return value;
+  }
+
+  /**
+   * class WindowSize
+   * <p>
+   * Represents the size of a window.
+   */
+  public static class WindowSize
+  {
     /**
-     * Sets the color to draw
-     * 
-     * @param the color
+     * The width of the window.
      */
-    public static void setColor3(Color c)
-    {
-        glColor3f(c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f);
-    }
-    
+    public final int w;
     /**
-     * Sets the color based on three inputs
-     * 
-     * @param the x input
-     * @param the y input
-     * @param the z input
+     * The height of the window.
      */
-    public static void setColor3(int r, int g, int b)
-    {
-        glColor3f(r / 255f, g / 255f, b / 255f);
-    }
-    
+    public final int h;
+
     /**
-     * Sets the color
-     * 
-     * @param the color to be set
+     * Constructor for WindowSize.
+     *
+     * @param width  The width of the window.
+     * @param height The height of the height.
      */
-    public static void setColor4(Color c)
+    public WindowSize(int width, int height)
     {
-        glColor4f(c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f, c.getAlpha() / 255f);
+      w = width;
+      h = height;
     }
-    
+
     /**
-     * Sets color based on an input
-     * 
-     * @param the color to be set
-     * @param the input to change the color
+     * @return the width of the window
      */
-    public static void setColor4(Color c, int a)
+    public int getWidth()
     {
-        glColor4f(c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f, a / 255f);
+      return w;
     }
-    
+
     /**
-     * Sets the color
-     * 
-     * @param the first input
-     * @param the second inpput
-     * @param the third input
-     * @param the fouth input
-     */    
-    public static void setColor4(int r, int g, int b, int a)
-    {
-        glColor4f(r / 255f, g / 255f, b / 255f, a / 255f);
-    }
-    
-    /**
-     * Sets the color based on 3 inputs
-     * 
-     * @param the first input
-     * @param the second input
-     * @param the third input
+     * @return the height of the window
      */
-    public static void setColorHSB3(int h, int s, int v)
+    public int getHeight()
     {
-        setColorHSB4(h,s,v,255);
-    }
-    
-    /**
-     * 
-     * Sets the color
-     * 
-     * @param the first input
-     * @param the second inpput
-     * @param the third input
-     * @param the fouth input
-     */
-    public static void setColorHSB4(int h, int s, int v, int a)
-    {
-        if (h<0)
-            h = h%360+360;
-        if (h>=360)
-            h%=360;
-        s = normalizeInt(s,0,100);
-        v = normalizeInt(v,0,100);
-
-        int c = v*s;
-        int x = c*(1-Math.abs(h/60%2-1));
-        int m = v-c;
-
-        s = s*255/100;
-        v = v*255/100;
-
-        int r=0,g=0,b=0;
-        if (s == 0) {
-
-            r = g = b = v;
-        } else {
-            int t1 = v;
-            int t2 = (255 - s) * v / 255;
-            int t3 = (t1 - t2) * (h % 60) / 60;
-
-            if (h == 360) h = 0;
-
-            if (h < 60) { r = t1; b = t2; g = t2 + t3 ;}
-            else if (h < 120) { g = t1; b = t2; r = t1 - t3 ;}
-            else if (h < 180) { g = t1; r = t2; b = t2 + t3 ;}
-                else if (h < 240) { b = t1; r = t2; g = t1 - t3 ;}
-                    else if (h < 300) { b = t1; g = t2; r = t2 + t3 ;}
-                        else if (h < 360) { r = t1; g = t2; b = t1 - t3 ;}
-                            else { r = 0; g = 0; b = 0 ;}
-        }
-
-        setColor3(r,g,b);
-    }
-    
-    /**
-     * Draws a a rectangle
-     * 
-     * @param the x value
-     * @param the y value
-     * @param the width
-     * @param the height
-     * @param to fill or not to fill
-     */
-    public static void drawRectangleOr(int x, int y, int width, int height, boolean fill)
-    {
-        glBegin(fill ? GL_POLYGON : GL_LINE_LOOP);
-        doPointOr(x - width / 2, y - height / 2);
-        doPointOr(x + width / 2, y - height / 2);
-        doPointOr(x + width / 2, y + height / 2);
-        doPointOr(x - width / 2, y + height / 2);
-        glEnd();
-    }
-    
-    /**
-     * Draws a line
-     * 
-     * @param the start point
-     * @param the end point
-     */
-    public static void drawLineOr(Point start, Point end)
-    {
-        glBegin(GL_LINES);
-        doPointOr(start.x, start.y);
-        doPointOr(end.x, end.y);
-        glEnd();
-    }
-    
-    /**
-     * Draws a circle 
-     * @param the x position
-     * @param the y position
-     * @param the radius
-     * @param to fill or not to fill
-     */
-    public static void doCircle(double xPos, double yPos, double radius, boolean fill)
-    {
-        int num_segments = (int) (7 * radius);
-        double theta = 2 * PI / num_segments;
-
-        double tangetial_factor = tan(theta); //calculate the tangential factor
-        double radial_factor = cos(theta); //calculate the radial factor
-
-        double x = radius; //we start at angle = 0
-        double y = 0;
-
-        glBegin(fill ? GL_POLYGON : GL_LINE_LOOP);
-        for (int i = 0; i < num_segments; i++)
-        {
-            doPointOr(xPos + x, yPos + y);//output vertex
-
-            //calculate the tangential vector
-            //remember, the radial vector is (x, y)
-            //to getPath the tangential vector we flip those coordinates and negate one of them
-            double tx = -y;
-            double ty = x;
-
-            //add the tangential vector
-            x += tx * tangetial_factor;
-            y += ty * tangetial_factor;
-
-            //correct using the radial factor
-            x *= radial_factor;
-            y *= radial_factor;
-        }
-        glEnd();
-    }
-
-
-    // **************** MY METHODS FOR HELPING ME **************** //TODO
-
-    /**
-     * Sets the window
-     * 
-     * @param the new window
-     */
-    public void setWindow(DisplayableWindow newWindow)
-    {
-        currentlyDisplayed = newWindow;
-    }
-    
-    /**
-     * Gets the window size
-     * 
-     * @return the size of the window
-     */
-    public static WindowSize getWindowSize()
-    {
-        try (MemoryStack stack = MemoryStack.stackPush())
-        {
-            //int* width = malloc(1);
-            IntBuffer pWidth = stack.mallocInt(1); // int*
-            IntBuffer pHeight = stack.mallocInt(1); // int*
-
-            glfwGetWindowSize(window, pWidth, pHeight);
-            return new WindowSize(pWidth.get(), pHeight.get());
-        } catch (IllegalArgumentException e)
-        {
-            return new WindowSize(0, 0);
-        }
-    }
-    
-    /**
-     * Get the cursor location
-     * 
-     * @param the window size
-     * @return the location
-     */
-    public Point2D getCursorLocationCartesian(WindowSize w)
-    {
-        try (MemoryStack stack = MemoryStack.stackPush())
-        {
-            //double* x = malloc(1);
-            DoubleBuffer x = stack.mallocDouble(1); // int*
-            DoubleBuffer y = stack.mallocDouble(1); // int*
-
-            glfwGetCursorPos(window, x, y);
-            return new Point2D.Double(x.get() - w.getWidth() / 2D, w.getHeight() / 2D - y.get());
-        } catch (IllegalArgumentException e)
-        {
-            return null;
-        }
-    }
-    
-    /**
-     * GEts the cursor location origin
-     * 
-     * @param the window size
-     * @return the cursor origin
-     */
-    public static Point getCursorLocationOrigin(WindowSize w)
-    {
-        try (MemoryStack stack = MemoryStack.stackPush())
-        {
-            //double* x = malloc(1);
-            DoubleBuffer x = stack.mallocDouble(1); // int*
-            DoubleBuffer y = stack.mallocDouble(1); // int*
-
-            glfwGetCursorPos(window, x, y);
-
-            return new Point((int) Math.round(x.get()), (int) Math.round(y.get()));
-        } catch (IllegalArgumentException e)
-        {
-            return null;
-        }
-    }
-    
-    /**
-     * Normalizes the int
-     * 
-     * @param the value
-     * @param the min
-     * @param the max
-     * @return the normalized int
-     */
-    public static int normalizeInt(int value, int min, int max)
-    {
-        if (value<min)
-            return min;
-        if (value>max)
-            return max;
-        return value;
+      return h;
     }
 
     /**
-     * Class of window size
+     * Converts this {@code WindowSize} to a {@link String}.
+     *
+     * @return This object as a {@link String}.
      */
-    public static class WindowSize
+    public String toString()
     {
-        public final int w, h;
-        
-        /**
-         * Cosntructs the window size
-         * 
-         * @param the width of the window
-         * @param the height of the window
-         */
-        public WindowSize(int width, int height)
-        {
-            w = width;
-            h = height;
-        }
-        
-        /**
-         * Gets the width
-         * 
-         * @returnt the width of the window
-         */
-        public int getWidth()
-        {
-            return w;
-        }
-        
-        /**
-         * Gets the hieght
-         * 
-         * @returnt the hieght of the window
-         */
-        public int getHeight()
-        {
-            return h;
-        }
-        
-        /**
-         * Gets the string
-         * 
-         * @returnt the string of the window
-         */
-        public String toString()
-        {
-            return "WindowSize[width=" + w + ",height=" + h + "]";
-        }
+      return "WindowSize[width=" + w + ",height=" + h + "]";
     }
+  }
 }
